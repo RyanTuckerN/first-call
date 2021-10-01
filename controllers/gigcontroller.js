@@ -1,5 +1,5 @@
 const express = require("express");
-const { Gig, User } = require("../models");
+const { Gig, User, CallStack } = require("../models");
 const { CLIENT_URL, EMAIL_PASSWORD, EMAIL_USER } = process.env;
 const router = express.Router();
 const nodemailer = require("nodemailer");
@@ -54,6 +54,27 @@ router.get("/:gigId", validateSession, async (req, res) => {
     } else {
       res.status(404).json({ message: "Gig not found" });
     }
+  } catch (err) {
+    res.status(500).json({ err });
+  }
+});
+
+//CREATE A CALLSTACK OBJ FOR YOUR GIG.
+//CALLSTACK REQUEST SHOULD BE JSON OBJ 'stackTable' WITH A KEY REPRESENTING EACH INTSTRUMENT
+//EACH KEY HAS VALUE OF ARRAY OF EMAIL ADDRESSES, IN ORDER OF CALL (1ST, 2ND, 3RD ETC)
+router.post("/:gigId/callStack", validateSession, async (req, res) => {
+  try {
+    const { stackTable } = req.body;
+    const { gigId } = req.params;
+    const gig = await Gig.findOne({ where: { id: gigId } });
+
+    if (gig.ownerId != req.user.id) {
+      res.status(403).json({ message: "Not Authorized!" });
+    }
+
+    const stack = await CallStack.create({ stackTable, gigId });
+
+    res.status(200).json({ message: "Success!", stack });
   } catch (err) {
     res.status(500).json({ err });
   }

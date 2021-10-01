@@ -1,6 +1,10 @@
 const User = require('./user')
 const Gig = require('./gig')
 const Notification = require('./notification')
+const CallStack = require('./callStack')
+
+Gig.hasOne(CallStack)
+CallStack.belongsTo(Gig)
 
 User.hasMany(Notification)
 Notification.belongsTo(User)
@@ -13,4 +17,5 @@ module.exports = {
   User, 
   Gig, 
   Notification,
+  CallStack
 }

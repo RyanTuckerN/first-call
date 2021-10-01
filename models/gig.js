@@ -52,6 +52,9 @@ Gig.addUserToGig = async (userId, gigId) => {
 Gig.getGigInfo = async (gigId) => {
   try {
     const gig = await Gig.findOne({ where: { id: gigId } });
+    const callStack = await sequelize.models.callStack.findOne({
+      where: { gigId },
+    });
     if (gig) {
       const response = {
         gig: {
@@ -59,44 +62,27 @@ Gig.getGigInfo = async (gigId) => {
           date: gig.date,
           payment: gig.payment,
           optionalInfo: gig.optionalInfo,
+          callStack: callStack?.stackTable ?? "no callstack created yet",
         },
       };
+
       response.bandLeader = await sequelize.models.user.findOne({
         where: { id: gig.ownerId },
         attributes: ["id", "email", "role"],
-        // include: { model: sequelize.models.profile },
       });
       const users = await gig.getUsers();
-      // const profiles = await sequelize.models.profile.findAll({where: { id: { [Op.in]: users.map((u) => u.id) } }})
-        // .map((profile) => {
-        //   const {
-        //     firstName,
-        //     lastName,
-        //     description,
-        //     location,
-        //     paymentPreference,
-        //     specialties,
-        //   } = profile;
-        //   return {
-        //     firstName,
-        //     lastName,
-        //     description,
-        //     location,
-        //     paymentPreference,
-        //     specialties,
-        //   };
-        // });
-      // console.log(profiles);
+
       response.bandMembers = users.map((user) => {
         return {
           id: user.id,
           email: user.email,
           role: user.role,
-          // profile: profiles.filter((profile) => profile.id === user.id)[0],
         };
       });
       // response.users = users;
       return response;
+    } else {
+      return { message: "That gig doesn't exist!" };
     }
   } catch (err) {
     return err;
