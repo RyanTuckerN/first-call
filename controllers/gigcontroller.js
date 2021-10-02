@@ -1,5 +1,6 @@
 const express = require("express");
 const { Gig, User, CallStack } = require("../models");
+const CallStackModel = require("../helpers/CallStackModel");
 const { CLIENT_URL, EMAIL_PASSWORD, EMAIL_USER } = process.env;
 const router = express.Router();
 const nodemailer = require("nodemailer");
@@ -25,19 +26,29 @@ router.post("/", validateSession, async (req, res) => {
 
 //ACCEPT A GIG OFFER
 router.post(
-  "/addUser/userId/:userId/gigId/:gigId",
+  "/:gigId/addUser/:userId/:role",
   validateSession,
   async (req, res) => {
-    const { userId, gigId } = req.params;
+    const { userId, gigId, role } = req.params;
+    const user = User.findOne({ where: { id: userId } });
+    const callStack = await CallStack.findOne({ where: { gigId } });
+    console.log("callStack instance: ", callStack);
+    const GigStack = new CallStackModel(callStack);
+    console.log('GIGSTACK: ',GigStack)
+    GigStack.setStackFilled(role)
+    // console.log('GigStack: ',GigStack)
+    GigStack.checkFilled()
     const userAuth = parseInt(userId) === req.user.id;
-    if (!userAuth) {
+    // if (!userAuth) {
+    if (false) { //use this for testing, in reality we want userAuth so only logged-in user can accept the gig
       res
         .status(400)
         .json({ message: "You are not authorized to join this gig!" });
     } else
       try {
         const query = await Gig.addUserToGig(userId, gigId);
-        res.status(200).json({ query });
+        const updatedStack = await CallStack.update(GigStack, {where: {gigId}})
+        res.status(200).json({ query, updatedStack: GigStack, updateCount: updatedStack });
       } catch (err) {
         res.status(500).json({ err });
       }
@@ -45,6 +56,7 @@ router.post(
 );
 
 //GET SPECIFIC GIG INFORMATION
+//SHOULD PROBABLY MAKE THIS A PROTECTED ROUTE
 router.get("/:gigId", validateSession, async (req, res) => {
   const { gigId } = req.params;
   try {
@@ -71,17 +83,21 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     if (gig.ownerId != req.user.id) {
       res.status(403).json({ message: "Not Authorized!" });
     }
+    //model method 'newStackTable' takes the request body and organizes it into a more detailed object
+    //CallStackModel will take properties of following 'callStack' model instance to a class instance with methods
+    //these methods will be used to control changes to the callStack
+    const callStack = await CallStack.newStackTable(stackTable, gigId);
+    // here I should set up logic to automatically send notificaitons/invites to each firstCall
+    console.log(callStack)
 
-    const stack = await CallStack.create({ stackTable, gigId });
-
-    res.status(200).json({ message: "Success!", stack });
+    res.status(200).json({ message: "Success!", callStack });
   } catch (err) {
     res.status(500).json({ err });
   }
 });
 
 //SEND EMAIL WITH ACCEPT/REJECT LINKS
-router.post("/email", validateSession, async (req, res) => {
+router.post("/:gigId/email", validateSession, async (req, res) => {
   const { to, subject, html } = req.body;
 
   const user = await User.findOne({ where: { email: to } });
@@ -94,9 +110,15 @@ router.post("/email", validateSession, async (req, res) => {
     },
   });
 
-  const acceptUrl = `${CLIENT_URL}/home/offers?email=${to}`;
+  /************************************************************
+   * THIS URL WILL DEPEND ON FRONT END CODE
+   * SHOULD TAKE USER TO LOGIN/SIGNUP AND RUN A FETCH FROM INSIDE APP
+   *    *FETCH SHOULD SUBSCRIBE THE USER TO THE GIG AND PERSIST TO DB
+   *    *IT SHOULD ALSO FREEZE THIS 'ROLE'
+   *************************************************************/
+  const acceptUrl = `${CLIENT_URL}/home/offers?email=${to}`; //accept offer and include email address
   const mailOptions = {
-    from: "RyanTuckerN@gmail.com",
+    from: EMAIL_USER,
     to, //email address
     subject,
     html: user
@@ -116,3 +138,13 @@ router.post("/email", validateSession, async (req, res) => {
 });
 
 module.exports = router;
+
+/**
+ * I NEED TO FIGURE OUT HOW TO, WHEN A USER ACCEPTS THE OFFER, ADD THEM
+ * TO THE GIG AND ***FREEZE*** THE PROCESS OF NEXT CALL. IF THEY DECLINE, I
+ * NEED TO TRIGGER NOTIFICATION TO THE NEXT EMAIL ADDRESS IN THE CALLSTACK.
+ *
+ * filled offer : boolean
+ *
+ *
+ */
