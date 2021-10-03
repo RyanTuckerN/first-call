@@ -1,8 +1,6 @@
 const express = require("express");
 const { Gig, User, CallStack } = require("../models");
 const CallStackModel = require("../helpers/CallStackModel");
-const { CLIENT_URL, EMAIL_PASSWORD, EMAIL_USER } = process.env;
-const nodemailer = require("nodemailer");
 const newEmail = require('../helpers/newEmail')
 const router = express.Router();
 const validateSession = require("../middleware/validateSession");

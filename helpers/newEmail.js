@@ -43,14 +43,18 @@ const emailController = (gig, sender, emailCode) => {
     };
   }
 };
+
+
+
 /*this function should take:
 to: email address of recipient
-emailCode: different emails will be categorized by codes
+emailCode: different emails types are categorized by codes
+gigId
 */
 module.exports = async (to, emailCode, gigId) => {
   try {
     const gig = await Gig.findOne({ where: { id: gigId } });
-    const receier = await User.findOne({ where: { email: to } }); //might be undefined/null
+    const receiver = await User.findOne({ where: { email: to } }); //might be undefined/null
     const sender = await User.findOne({ where: { id: gig.ownerId } });
 
     const transporter = nodemailer.createTransport({
@@ -64,8 +68,6 @@ module.exports = async (to, emailCode, gigId) => {
     /************************************************************
      * THIS URL WILL DEPEND ON FRONT END CODE
      * SHOULD TAKE USER TO LOGIN/SIGNUP AND RUN A FETCH FROM INSIDE APP
-     *    *FETCH SHOULD SUBSCRIBE THE USER TO THE GIG AND PERSIST TO DB
-     *    *IT SHOULD ALSO FREEZE THIS 'ROLE'
      *************************************************************/
     // const acceptUrl = `${CLIENT_URL}/home/offers/${gig.id}?email=${to}`; //accept offer and include email address
     const content = emailController(gig, sender, emailCode);

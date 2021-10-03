@@ -67,7 +67,7 @@ router.put("/profile", validateSession, async (req, res) => {
   try {
     const result = await User.update(updateUser, query);
     if (!result[0]) {
-      res.status(403).json({ message: "Account not found" });
+      res.status(403).json({ message: 'Account not found' });
     } else {
       res.status(200).json({ message: `${email}'s profile has been updated!'`});
     }
