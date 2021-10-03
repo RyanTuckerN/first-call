@@ -12,6 +12,7 @@ const CallStack = sequelize.define("callStack", {
   filled: { type: DataTypes.BOOLEAN, defaultValue: false },
 });
 
+//
 CallStack.newStackTable = async (table, gigId) => {
   const stackTable = {};
   const roles = Object.keys(table);
@@ -23,10 +24,10 @@ CallStack.newStackTable = async (table, gigId) => {
   });
   const constructorObj = {stackTable, gigId, filled: false, }
 
-  const GigStack = new CallStackModel({constructorObj})
+  const GigStack = new CallStackModel(constructorObj)
   GigStack.setFirstCalls()
 
-  console.log(GigStack);
-  return await CallStack.create({ stackTable: GigStack, gigId });
+  console.log('GigStack in callStack.js: ', GigStack);
+  return await CallStack.create(GigStack);
 };
 module.exports = CallStack;

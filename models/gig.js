@@ -29,6 +29,7 @@ Gig.addUserToGig = async (userId, gigId) => {
   try {
     const user = await sequelize.models.user.findOne({ where: { id: userId } });
     const gig = await Gig.findOne({ where: { id: gigId } });
+
     let response = { errors: [] };
     if (!user) response.errors.push(`User ${userId} doesn't exist!`);
     if (!gig) response.errors.push(`Gig ${gigId} doesn't exist!`);
@@ -43,6 +44,7 @@ Gig.addUserToGig = async (userId, gigId) => {
         response.message = `Something went wrong! That user has probably already been added to that gig.`;
       }
     }
+    
     return response;
   } catch (err) {
     return err;
@@ -62,13 +64,13 @@ Gig.getGigInfo = async (gigId) => {
           date: gig.date,
           payment: gig.payment,
           optionalInfo: gig.optionalInfo,
-          callStack: callStack?.stackTable ?? "no callstack created yet",
+          callStack: callStack ?? "no callstack created yet",
         },
       };
 
       response.bandLeader = await sequelize.models.user.findOne({
         where: { id: gig.ownerId },
-        attributes: ["id", "email", "role"],
+        attributes: ["id", "email"],
       });
       const users = await gig.getUsers();
 
@@ -76,7 +78,7 @@ Gig.getGigInfo = async (gigId) => {
         return {
           id: user.id,
           email: user.email,
-          role: user.role,
+          // role: user.role,
         };
       });
       // response.users = users;
