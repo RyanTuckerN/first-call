@@ -10,7 +10,7 @@ router.post("/:id", validateSession, async (req, res) => {
       message,
       optionalInfo,
       source: req.user.id,
-      userId: req.params.id
+      userId: req.params.id 
     });
     res.status(200).json({ newNotification });
   } catch (err) {

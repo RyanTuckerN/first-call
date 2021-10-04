@@ -20,8 +20,8 @@ const CallStack = sequelize.define("callStack", {
  */
 CallStack.newStackTable = async (table, gigId) => {
   const stackTable = {};
-  // const roles = Object.keys(table);
-  console.log("roles: ", roles);
+  const roles = Object.keys(table);
+  // console.log("roles: ", roles);
   roles.forEach((role) => {
     stackTable[role] = {};
     stackTable[role].filled = false;

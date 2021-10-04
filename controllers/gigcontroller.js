@@ -42,7 +42,6 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     //CallStackModel will set the properties of that 'callStack' model instance to a class instance with methods
     //these methods will be used to control changes to the callStack
     const callStack = await CallStack.newStackTable(stackTable, gigId);
-
     const GigStack = new CallStackModel(callStack);
     const roles = GigStack.returnRoles();
     roles.forEach(async (role) => {
@@ -52,7 +51,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     });
 
     console.log(callStack);
-    ["drums1@gmail.com"],
+    // ["drums1@gmail.com"],
       res.status(200).json({ message: "Success!", callStack });
   } catch (err) {
     res.status(500).json({ err });
@@ -145,7 +144,7 @@ router.post(
 
     const nextUser = GigStack.returnNext(role);
     if (nextUser === "Empty stack!") {
-      await newEmail(gigOwner.email, 301, gigId, user.email, role);
+      await newEmail(gigOwner.email, 301, gigId, user.email, { role });
     } else {
       await newEmail(gigOwner.email, 200, gigId, user.email);
       await newEmail(nextUser, 100, gigId, gigOwner.email);
@@ -195,19 +194,19 @@ router.post(
 
       //if the role doesn't exist on this callStack
       if (!GigStack.returnRoles().includes(role)) {
-        res
-          .status(400)
-          .json({
-            message: `The role ${role} doesn't exist on this callstack, but you can add it!`,
-          });
+        res.status(400).json({
+          message: `The role ${role} doesn't exist on this callstack, but you can add it!`,
+        });
         return;
       }
 
       GigStack.addCallToStack(role, email);
 
       await CallStack.update(GigStack, { where: { gigId } });
-      
-      res.status(200).json({ message: `getting there!`, updatedCallStack: GigStack });
+
+      res
+        .status(200)
+        .json({ message: `getting there!`, updatedCallStack: GigStack });
     } catch (err) {
       res.status(500).json({ message: `Something has gone wrong!` });
     }
@@ -215,41 +214,44 @@ router.post(
 );
 
 //ADD NEW ROLE TO STACKTABLE
-router.post("/:gigId/callstack/addRole/:role", validateSession, async(req,res)=>{
-  const { gigId, role } = req.params
-  const { calls } = req.body
-  const gig = await Gig.findOne({
-    where: { id: gigId, ownerId: req.user.id },
-    include: { model: CallStack },
-  });
+router.post(
+  "/:gigId/callstack/addRole/:role",
+  validateSession,
+  async (req, res) => {
+    const { gigId, role } = req.params;
+    const { calls } = req.body;
+    const gig = await Gig.findOne({
+      where: { id: gigId, ownerId: req.user.id },
+      include: { model: CallStack },
+    });
 
-  
-  if (!gig || !gig.callStack) {
-    res
-      .status(403)
-      .json({ message: `You must have gotten here on accident!` });
-    console.log(
-      `🔥🔥🔥 Gig does not exist at add new role to callStack, gigcontroller.js`
-    );
-    return;
+    if (!gig || !gig.callStack) {
+      res
+        .status(403)
+        .json({ message: `You must have gotten here on accident!` });
+      console.log(
+        `🔥🔥🔥 Gig does not exist at add new role to callStack, gigcontroller.js`
+      );
+      return;
+    }
+    const GigStack = new CallStackModel(gig.callStack);
+
+    GigStack.addRoleToStackTable(role, calls);
+    console.log(GigStack);
+    res.status(200).json({ GigStack });
   }
-  const GigStack = new CallStackModel(gig.callStack);
-
-  GigStack.addRoleToStackTable(role, calls)
-  console.log(GigStack)
-  res.status(200).json({ GigStack });
-
-
-})
+);
 
 router.get("/email/:gigId", validateSession, async (req, res) => {
-  await newEmail(
-    "ryantuckern@gmail.com",
-    100,
-    req.params.gigId,
-    "pooptest@gmail.gov"
-  );
-  res.status(200).json({ message: "who knows lets check" });
+  try {
+    const { to, emailCode, sender, options } = req.body;
+    const { gigId } = req.params;
+    await newEmail(to, emailCode, gigId, sender, options);
+    res.status(200).json({ message: 'I did my part! Not sure if it worked lol' });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: 'Something went wrong', err });
+  }
 });
 
 module.exports = router;
