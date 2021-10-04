@@ -12,10 +12,15 @@ const CallStack = sequelize.define("callStack", {
   filled: { type: DataTypes.BOOLEAN, defaultValue: false },
 });
 
-//
+/**
+ * This method takes table and gigId, arranges it in a clean way, and persists it to the database table CallStack
+ * @param {Object} table raw json request from user. contains keys of role and values of array of email addresses 
+ * @param {Number} gigId represents Gig instance
+ * @returns {Object} callStack instance
+ */
 CallStack.newStackTable = async (table, gigId) => {
   const stackTable = {};
-  const roles = Object.keys(table);
+  // const roles = Object.keys(table);
   console.log("roles: ", roles);
   roles.forEach((role) => {
     stackTable[role] = {};
@@ -27,7 +32,7 @@ CallStack.newStackTable = async (table, gigId) => {
   const GigStack = new CallStackModel(constructorObj)
   GigStack.setFirstCalls()
 
-  console.log('GigStack in callStack.js: ', GigStack);
+  // console.log('GigStack in callStack.js: ', GigStack);
   return await CallStack.create(GigStack);
 };
 module.exports = CallStack;

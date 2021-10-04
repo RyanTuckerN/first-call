@@ -25,6 +25,12 @@ const Gig = sequelize.define("gig", {
   optionalInfo: DataTypes.JSONB,
 });
 
+/**
+ * Gig method that associates User instance to Gig instance, persists the relationship to the Database via user_gigs table
+ * @param {Number} userId user to add
+ * @param {Number} gigId gig to add them to
+ * @returns {Object} with properties **errors**, **query**, and **message**,
+ */
 Gig.addUserToGig = async (userId, gigId) => {
   try {
     const user = await sequelize.models.user.findOne({ where: { id: userId } });
@@ -51,6 +57,17 @@ Gig.addUserToGig = async (userId, gigId) => {
   }
 };
 
+/**
+ * 
+ * @param {Number} gigId 
+ * @returns {Object} gig: {
+          {String} description,
+          {String} date,
+          {Number} payment,
+          {Object} optionalInfo,
+          {Object} callStack if callstack exists, otherwise {String} "no callstack created yet"
+        },
+ */
 Gig.getGigInfo = async (gigId) => {
   try {
     const gig = await Gig.findOne({ where: { id: gigId } });
@@ -78,7 +95,6 @@ Gig.getGigInfo = async (gigId) => {
         return {
           id: user.id,
           email: user.email,
-          // role: user.role,
         };
       });
       // response.users = users;
