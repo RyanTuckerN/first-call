@@ -30,7 +30,7 @@ CallStack.newStackTable = async (table, gigId) => {
   const constructorObj = {stackTable, gigId, filled: false, }
 
   const GigStack = new CallStackModel(constructorObj)
-  // GigStack.setFirstCalls()
+  GigStack.setFirstCalls()
 
   // console.log('GigStack in callStack.js: ', GigStack);
   return await CallStack.create(GigStack);
