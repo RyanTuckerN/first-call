@@ -1,11 +1,16 @@
 module.exports = class CallStackModel {
+  /**
+   *
+   * @param {Object} param0 callStack instance from sequelize.
+   * @param {Boolean} param0.filled whether the gigStack is filled, meaning all roles have been confirmed
+   * @param {Object} param0.stackTable object with 'roles' as keys, one role for each intstrument with a call stack
+   * @param {Number} param0.gigId id of corresponding gig
+   */
   constructor({ filled, stackTable, gigId }) {
     this.filled = filled;
     this.stackTable = stackTable;
     this.gigId = gigId;
   }
-
-  //***METHODS!***/
 
   /**
    * sets this callStack instance to filled
@@ -18,15 +23,7 @@ module.exports = class CallStackModel {
   }
 
   /**
-   * returns an array of all roles defined in callstack http request
-   * @returns {Array} of {Strings}
-   */
-  returnRoles() {
-    return Object.keys(this.stackTable);
-  }
-
-  /**
-   * sets first call to 'oncall'.
+   * sets first call in each stack to 'oncall'.
    * should only be called once when the callstack is instantiated
    * @returns {Number} roles.length
    */
@@ -34,6 +31,14 @@ module.exports = class CallStackModel {
     const roles = this.returnRoles();
     roles.forEach((role) => this.returnNext(role));
     return roles.length;
+  }
+
+  /**
+   * returns an array of all roles defined on this gig stack
+   * @returns {Array} of {Strings}
+   */
+  returnRoles() {
+    return Object.keys(this.stackTable);
   }
 
   /**
@@ -46,13 +51,14 @@ module.exports = class CallStackModel {
     this.stackTable[role].filled = true;
     this.stackTable[role].confirmed = this.stackTable[role].onCall;
     this.stackTable[role].onCall = null;
-    this.checkFilled()
+    this.checkFilled();
     return this.stackTable[role].confirmed;
   }
 
   //returns next call from specific role callstack, takes role as string
   /**
-   * sets next call as onCall, returns email address of next or empty stack if the callstack is empty
+   * ### Add next call in stack as *oncall*
+   * sets next call as onCall, returns email address of *next* or empty stack if the callstack is empty
    * @param {String} role to setNext on
    * @returns {String}
    */
@@ -70,36 +76,89 @@ module.exports = class CallStackModel {
   /**
    * adds an email address to the end of a specific call list, returns callStack
    * @param {String} role
-   * @param {String} call email address
-   * @returns {Array|Void} updated callStack, unless call already existed which returns void
+   * @param {String} call email address. Also accepts array of email addresses
+   * @returns {Object} contains keys 'updatedStack' {Array}, current onCall {String}, and *option* message if applicable
    */
   addCallToStack(role, call) {
-    //don't add if it already exists in calls array:
-    if (this.stackTable[role].calls.includes(call) || this.stackTable[role].onCall === call) return;
+    //if the role doesn't exist create it. 
+    if (!this.returnRoles().includes(role)) {
+      if (Array.isArray(call)) {
+        //if call argument is an array, use it in addRole method 
+        //change name from 'call' to 'calls' because it is an array
+        const calls = call;
+        this.addRoleToStackTable(role, calls);
+      } else {
+        //if call argument is string as expected, add it to an array
+        this.addRoleToStackTable(role, [call]);
+      }
+      return {
+        stack: this.stackTable[role].calls,
+        onCall: this.stackTable[role].onCall,
+        message: "The stack didn't exist, but it does now.",
+      }
+    }
 
-    this.stackTable[role].calls.push(call);
-    if (this.stackTable[role].emptyStack) {
-      this.returnNext(role);
-      this.stackTable[role].emptyStack = false;
+    //if call argument is an array, push each address therein to callStack
+    if (Array.isArray(call)) {
+      const calls = call;
+      //recursive?
+      calls.forEach((c) => this.addCallToStack(role, c));
+      return {
+        stack: this.stackTable[role].calls,
+        onCall: this.stackTable[role].onCall,
+        message: "Added them all!",
+      };
+    }
+
+    //don't add if it already exists in calls array:
+    if (
+      this.stackTable[role].calls.includes(call) ||
+      this.stackTable[role].onCall === call
+    ) {
+      return {
+        stack: this.stackTable[role].calls,
+        onCall: this.stackTable[role].onCall,
+        message: "This role already existed here.",
+      };
+    } 
+    //otherwise do add it
+    else {
+      this.stackTable[role].calls.push(call);
+      if (this.stackTable[role].emptyStack) {
+        this.returnNext(role);
+        this.stackTable[role].emptyStack = false;
+      }
+      return {
+        stack: this.stackTable[role].calls,
+        onCall: this.stackTable[role].onCall,
+        message: `${call} added successfully`,
+
+      };
     }
   }
 
   /**
    *
    * @param {String} role name of the role to add
-   * @param {Array} calls array of emailadress strings, ordered
+   * @param {Array} calls array of emailadress strings, ordered from first to last call. A single call as sting is also acceptable
+   * @returns {Object} all values associated with new role
    */
   addRoleToStackTable(role, calls = []) {
+    if (!Array.isArray(calls)) {
+      calls = [calls];
+    }
+
     this.stackTable[role] = { calls, filled: false };
     if (!calls.length) {
       this.stackTable[role].onCall = null;
-      return;
+      return this.stackTable[role];
     }
     this.returnNext(role);
+    return this.stackTable[role];
   }
 
   /**
-   * returns specific role, takes role as string
+   * returns specific role and associated properties, takes name of role as string
    * @param {{String}} role to return
    * @returns {Object}
    */
@@ -112,11 +171,24 @@ module.exports = class CallStackModel {
     console.log(this.stackTable);
   }
 
+  //logs whole gigStack
+  log() {
+    console.log(this)
+  }
+
   /**
    * returns role count
    * @returns {Number}
    */
   returnStackCount() {
+    return Object.keys(this.stackTable).length;
+  }
+
+  /**
+   * #### Getter
+   * @returns {Number} number of stacks in this GigStack
+   */
+  get stackCount() {
     return Object.keys(this.stackTable).length;
   }
 
@@ -129,7 +201,7 @@ module.exports = class CallStackModel {
     const mappedRoles = roles.map((role) => this.stackTable[role].filled);
     // console.log('MAPPEDROLES: ',mappedRoles)
     let response;
-    if (!mappedRoles.includes(false)) {
+    if (mappedRoles.every((roleFilled) => roleFilled === true)) {
       this.setGigFilled();
       response = true;
     } else {
@@ -138,4 +210,3 @@ module.exports = class CallStackModel {
     return response;
   }
 };
-

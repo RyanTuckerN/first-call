@@ -230,7 +230,7 @@ router.post(
         .status(403)
         .json({ message: `You must have gotten here on accident!` });
       console.log(
-        `🔥🔥🔥 Gig does not exist at add new role to callStack, gigcontroller.js`
+        `🔥🔥🔥 Gig or callstack does not exist at add new role to callStack, gigcontroller.js`
       );
       return;
     }
