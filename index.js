@@ -17,6 +17,7 @@ app.use(express.json());
 app.use("/user", controllers.user);
 app.use("/gig", controllers.gig);
 app.use("/notification", controllers.notification);
+app.use("/board", controllers.messageboard);
 app.use("/", (req, res) =>
   res
     .status(200)

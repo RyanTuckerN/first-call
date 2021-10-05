@@ -2,9 +2,17 @@ const User = require('./user')
 const Gig = require('./gig')
 const Notification = require('./notification')
 const CallStack = require('./callStack')
+// const Board = require('./board')
+const MessageBoard = require('./messageBoard')
+const Post = require('./post')
 
 Gig.hasOne(CallStack)
+Gig.hasOne(MessageBoard)
 CallStack.belongsTo(Gig)
+MessageBoard.belongsTo(Gig)
+
+MessageBoard.hasMany(Post, {foreignKey: 'gigId'})
+Post.belongsTo(MessageBoard, {foreignKey: 'gigId'})
 
 User.hasMany(Notification)
 Notification.belongsTo(User)
@@ -17,5 +25,7 @@ module.exports = {
   User, 
   Gig, 
   Notification,
-  CallStack
+  CallStack,
+  MessageBoard,
+  Post
 }
