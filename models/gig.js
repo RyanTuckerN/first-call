@@ -1,4 +1,4 @@
-const { DataTypes, where, Op } = require("sequelize");
+const { DataTypes } = require("sequelize");
 const sequelize = require("../db");
 
 const Gig = sequelize.define("gig", {
@@ -70,10 +70,13 @@ Gig.addUserToGig = async (userId, gigId) => {
  */
 Gig.getGigInfo = async (gigId) => {
   try {
-    const gig = await Gig.findOne({ where: { id: gigId } });
+    const gig = await Gig.findOne({ where: { id: gigId }});
+    const posts = await sequelize.models.post.findAndCountAll({where: {gigId}})
     const callStack = await sequelize.models.callStack.findOne({
-      where: { gigId },
+      where: { gigId }
     });
+
+    console.log(posts)
     if (gig) {
       const response = {
         gig: {
@@ -82,6 +85,7 @@ Gig.getGigInfo = async (gigId) => {
           payment: gig.payment,
           optionalInfo: gig.optionalInfo,
           callStack: callStack ?? "no callstack created yet",
+          posts
         },
       };
 
