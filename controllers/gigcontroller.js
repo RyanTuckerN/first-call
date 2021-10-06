@@ -1,8 +1,8 @@
 const express = require("express");
+const router = express.Router();
 const { Gig, User, CallStack } = require("../models");
 const CallStackModel = require("../helpers/CallStackModel");
 const newEmail = require("../helpers/newEmail");
-const router = express.Router();
 const validateSession = require("../middleware/validateSession");
 
 //CREATE A GIG
@@ -47,12 +47,12 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     roles.forEach(async (role) => {
       const { onCall } = GigStack.stackTable[role];
       // send a new email!
-      await newEmail(onCall, 100, gigId, gigOwner.email);
+      await newEmail(onCall, 100, gigId, gigOwner.email, { role });
     });
 
     console.log(callStack);
     // ["drums1@gmail.com"],
-      res.status(200).json({ message: "Success!", callStack });
+    res.status(200).json({ message: "Success!", callStack });
   } catch (err) {
     res.status(500).json({ err });
   }
@@ -81,41 +81,46 @@ router.post(
   async (req, res) => {
     const { userId, gigId, role } = req.params;
 
-    const gig = await Gig.findOne({ where: { id: gigId } });
-    const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
-    const user = await User.findOne({ where: { id: userId } });
-    const callStack = await CallStack.findOne({ where: { gigId } });
+    try {
+      const gig = await Gig.findOne({ where: { id: gigId } });
+      const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
+      const user = await User.findOne({ where: { id: userId } });
+      const callStack = await CallStack.findOne({ where: { gigId } });
 
-    //converts callStack to CallStack instance, with methods included
-    const GigStack = new CallStackModel(callStack);
-    const userAuth = parseInt(userId) === req.user.id;
-    // if (!userAuth) {
-    if (false) {
-      //use this for testing, in reality we want userAuth so only logged-in user can accept the gig
-      res
-        .status(400)
-        .json({ message: "You are not authorized to join this gig!" });
-      return;
-    } else if (user.email != GigStack?.stackTable[role]?.onCall) {
-      res.status(403).json({
-        message: "You are not on call for this gig!",
-      });
-    } else
-      try {
-        GigStack.setStackFilled(role);
-        GigStack.checkFilled();
-        if (GigStack.filled) {
-          await newEmail(gigOwner.email, 300, gigId, user.email);
-        } else await newEmail(gigOwner.email, 201, gigId, user.email);
-
-        await Gig.addUserToGig(userId, gigId);
-        await CallStack.update(GigStack, {
-          where: { gigId },
+      //converts callStack to CallStack instance, with methods included
+      const GigStack = new CallStackModel(callStack);
+      const userAuth = parseInt(userId) === req.user.id;
+      // if (!userAuth) {
+      if (false) {
+        //use this for testing, in reality we want userAuth so only logged-in user can accept the gig
+        res
+          .status(400)
+          .json({ message: "You are not authorized to join this gig!" });
+        return;
+      } else if (user.email != GigStack?.stackTable[role]?.onCall) {
+        res.status(403).json({
+          message: "You are not on call for this gig!",
         });
-        res.status(200).json({ updatedStack: GigStack });
-      } catch (err) {
-        res.status(500).json({ err });
-      }
+      } else
+        try {
+          GigStack.setStackFilled(role);
+          GigStack.checkFilled();
+          if (GigStack.filled) {
+            await newEmail(gigOwner.email, 300, gigId, user.email, { role });
+          } else
+            await newEmail(gigOwner.email, 201, gigId, user.email, { role });
+
+          await Gig.addUserToGig(userId, gigId);
+          await CallStack.update(GigStack, {
+            where: { gigId },
+          });
+          res.status(200).json({ updatedStack: GigStack });
+        } catch (err) {
+          res.status(500).json({ err });
+        }
+    } catch (err) {
+      res.status(500).json({ err });
+    }
   }
 );
 
@@ -126,41 +131,44 @@ router.post(
   async (req, res) => {
     const { userId, gigId, role } = req.params;
 
-    const gig = await Gig.findOne({ where: { id: gigId } });
-    const callStack = await CallStack.findOne({ where: { gigId } });
-    const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
-    const user = await User.findOne({ where: { id: req.user.id } });
-
-    //converts callStack to CallStack instance, with methods included
-    const GigStack = new CallStackModel(callStack);
-
-    if (user.email !== GigStack.stackTable[role].onCall) {
-      res.status(403).json({
-        message:
-          "You are not on call for this gig! Did you wait too long to respond?",
-      });
-      return;
-    }
-
-    const nextUser = GigStack.returnNext(role);
-    if (nextUser === "Empty stack!") {
-      await newEmail(gigOwner.email, 301, gigId, user.email, { role });
-    } else {
-      await newEmail(gigOwner.email, 200, gigId, user.email);
-      await newEmail(nextUser, 100, gigId, gigOwner.email);
-    }
-
-    const userAuth = parseInt(userId) === req.user.id;
-    // if (!userAuth) {
-    if (false) {
-      //use this for testing, in reality we want userAuth so only logged-in user can accept the gig
-      res
-        .status(400)
-        .json({ message: "You are not authorized to join this gig!" });
-      return;
-    }
-    //check if user is on call
     try {
+      const gig = await Gig.findOne({ where: { id: gigId } });
+      const callStack = await CallStack.findOne({ where: { gigId } });
+      const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
+      const user = await User.findOne({ where: { id: req.user.id } });
+
+      //converts callStack to CallStack instance, with methods included
+      const GigStack = new CallStackModel(callStack);
+
+      if (user.email !== GigStack.stackTable[role].onCall) {
+        res.status(403).json({
+          message:
+            "You are not on call for this gig! Did you wait too long to respond?",
+        });
+        return;
+      }
+
+      const nextUser = GigStack.returnNext(role);
+      if (nextUser === "Empty stack!") {
+        await newEmail(gigOwner.email, 301, gigId, user.email, { role });
+      } else {
+        await newEmail(gigOwner.email, 200, gigId, user.email, {
+          role,
+          nextUser,
+        });
+        await newEmail(nextUser, 100, gigId, gigOwner.email, { role });
+      }
+
+      const userAuth = parseInt(userId) === req.user.id;
+      // if (!userAuth) {
+      if (false) {
+        //use this for testing, in reality we want userAuth so only logged-in user can accept the gig
+        res
+          .status(400)
+          .json({ message: "You are not authorized to join this gig!" });
+        return;
+      }
+      //check if user is on call
       await CallStack.update(GigStack, { where: { gigId } });
       res.status(200).json({ updatedStack: GigStack });
     } catch (err) {
@@ -180,6 +188,8 @@ router.post(
         where: { id: gigId, ownerId: req.user.id },
         include: { model: CallStack },
       });
+
+      const gigOwner = await User.findOne({ where: { id: req.user.id } });
 
       if (!gig || !gig.callStack) {
         res
@@ -201,6 +211,9 @@ router.post(
       }
 
       GigStack.addCallToStack(role, email);
+      if (GigStack.stackTable[role].onCall === email) {
+        await newEmail(email, 100, gigId, gigOwner.email, { role });
+      }
 
       await CallStack.update(GigStack, { where: { gigId } });
 
@@ -220,38 +233,54 @@ router.post(
   async (req, res) => {
     const { gigId, role } = req.params;
     const { calls } = req.body;
-    const gig = await Gig.findOne({
-      where: { id: gigId, ownerId: req.user.id },
-      include: { model: CallStack },
-    });
+    try {
+      const gig = await Gig.findOne({
+        where: { id: gigId, ownerId: req.user.id },
+        include: { model: CallStack },
+      });
+      const gigOwner = await User.findOne({ where: { id: req.user.id } });
 
-    if (!gig || !gig.callStack) {
-      res
-        .status(403)
-        .json({ message: `You must have gotten here on accident!` });
-      console.log(
-        `🔥🔥🔥 Gig or callstack does not exist at add new role to callStack, gigcontroller.js`
-      );
-      return;
+      if (!gig || !gig.callStack) {
+        res
+          .status(403)
+          .json({ message: `You must have gotten here by accident!` });
+        console.log(
+          `🔥🔥🔥 Gig or callstack does not exist at add new role to callStack, gigcontroller.js`
+        );
+        return;
+      }
+      const GigStack = new CallStackModel(gig.callStack);
+
+      const roleStack = GigStack.addRoleToStackTable(role, calls);
+      const firstCall =
+        typeof calls === "string"
+          ? calls
+          : Array.isArray(calls)
+          ? calls[0]
+          : null;
+
+      if (roleStack.onCall === firstCall && firstCall !== null) {
+        await newEmail(roleStack.onCall, 100, gigId, gigOwner.email, { role });
+      }
+
+      await CallStack.update(GigStack, { where: { gigId } });
+      res.status(200).json({ roleStack });
+    } catch (err) {
+      res.status(500).json({ err });
     }
-    const GigStack = new CallStackModel(gig.callStack);
-
-    GigStack.addRoleToStackTable(role, calls);
-    console.log(GigStack);
-    res.status(200).json({ GigStack });
   }
 );
 
-router.get("/email/:gigId", validateSession, async (req, res) => {
-  try {
-    const { to, emailCode, sender, options } = req.body;
-    const { gigId } = req.params;
-    await newEmail(to, emailCode, gigId, sender, options);
-    res.status(200).json({ message: 'I did my part! Not sure if it worked lol' });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: 'Something went wrong', err });
-  }
-});
+// router.get("/email/:gigId", validateSession, async (req, res) => {
+//   try {
+//     const { to, emailCode, sender, options } = req.body;
+//     const { gigId } = req.params;
+//     await newEmail(to, emailCode, gigId, sender, options);
+//     res.status(200).json({ message: 'I did my part! Not sure if it worked lol' });
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ message: 'Something went wrong', err });
+//   }
+// });
 
 module.exports = router;

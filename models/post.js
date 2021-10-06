@@ -3,9 +3,8 @@ const sequelize = require("../db");
 // const CallStackModel = require("../helpers/CallStackModel");
 
 class Post extends Model {
-
   /**
-   * adds upvote to post 
+   * adds upvote to post
    * @param {Number} userId user making request
    * @returns {Number} Upvote count, or -1 if not successful
    */
@@ -40,7 +39,7 @@ class Post extends Model {
   }
 
   /**
-   * removes duplicates, sorts, removes falsy values  
+   * removes duplicates, sorts, removes falsy values
    */
   purifyVoters() {
     const arr = this.voters;
@@ -64,7 +63,7 @@ Post.init(
     childOf: DataTypes.INTEGER,
     upvotes: { type: DataTypes.INTEGER, defaultValue: 0 },
     voters: { type: DataTypes.ARRAY(DataTypes.INTEGER) },
-    details: {type: DataTypes.JSONB, defaultValue: {}}
+    details: { type: DataTypes.JSONB, defaultValue: {} },
   },
   {
     sequelize,

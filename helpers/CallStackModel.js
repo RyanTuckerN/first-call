@@ -91,6 +91,7 @@ module.exports = class CallStackModel {
         //if call argument is string as expected, add it to an array
         this.addRoleToStackTable(role, [call]);
       }
+      if(this.stackTable[role].onCall === null){this.returnNext(role)}
       return {
         stack: this.stackTable[role].calls,
         onCall: this.stackTable[role].onCall,
@@ -103,6 +104,9 @@ module.exports = class CallStackModel {
       const calls = call;
       //recursive?
       calls.forEach((c) => this.addCallToStack(role, c));
+      if(this.stackTable[role].onCall === null){this.returnNext(role)}
+
+
       return {
         stack: this.stackTable[role].calls,
         onCall: this.stackTable[role].onCall,
@@ -118,9 +122,10 @@ module.exports = class CallStackModel {
       return {
         stack: this.stackTable[role].calls,
         onCall: this.stackTable[role].onCall,
-        message: "This role already existed here.",
+        message: "This call already existed here.",
       };
     } 
+
     //otherwise do add it
     else {
       this.stackTable[role].calls.push(call);
@@ -128,6 +133,7 @@ module.exports = class CallStackModel {
         this.returnNext(role);
         this.stackTable[role].emptyStack = false;
       }
+      if(this.stackTable[role].onCall === null){this.returnNext(role)}
       return {
         stack: this.stackTable[role].calls,
         onCall: this.stackTable[role].onCall,
@@ -144,7 +150,11 @@ module.exports = class CallStackModel {
    * @returns {Object} all values associated with new role
    */
   addRoleToStackTable(role, calls = []) {
-    if (!Array.isArray(calls)) {
+    if(!Array.isArray(calls) && typeof calls !== 'string'){
+      return -1
+    }
+
+    if (!Array.isArray(calls) && typeof calls === 'string') {
       calls = [calls];
     }
 
@@ -181,7 +191,7 @@ module.exports = class CallStackModel {
    * @returns {Number}
    */
   returnStackCount() {
-    return Object.keys(this.stackTable).length;
+    return this.returnRoles().length;
   }
 
   /**
@@ -189,7 +199,7 @@ module.exports = class CallStackModel {
    * @returns {Number} number of stacks in this GigStack
    */
   get stackCount() {
-    return Object.keys(this.stackTable).length;
+    return this.returnStackCount();
   }
 
   /**
@@ -197,7 +207,7 @@ module.exports = class CallStackModel {
    * @returns {Boolean}
    */
   checkFilled() {
-    const roles = Object.keys(this.stackTable);
+    const roles = this.returnRoles()
     const mappedRoles = roles.map((role) => this.stackTable[role].filled);
     // console.log('MAPPEDROLES: ',mappedRoles)
     let response;

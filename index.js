@@ -1,10 +1,10 @@
 require("dotenv").config();
-const express = require("express");
-const db = require("./db");
-const app = express();
-const PORT = process.env.PORT;
-const controllers = require("./controllers");
-const server = app.listen(PORT, () =>
+const express = require("express"),
+ db = require("./db"),
+ app = express(),
+ PORT = process.env.PORT,
+ controllers = require("./controllers"),
+ server = app.listen(PORT, () =>
   console.log(`🚢 Server listening on port ${PORT} 🚢`)
 );
 
