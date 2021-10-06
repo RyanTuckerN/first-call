@@ -27,9 +27,9 @@ router.post("/", validateSession, async (req, res) => {
 //CALLSTACK REQUEST SHOULD BE JSON OBJ 'stackTable' WITH A KEY REPRESENTING EACH INTSTRUMENT
 //EACH KEY HAS VALUE OF ARRAY OF EMAIL ADDRESSES, IN ORDER OF CALL (1ST, 2ND, 3RD ETC)
 router.post("/:gigId/callStack", validateSession, async (req, res) => {
+  const { stackTable } = req.body;
+  const { gigId } = req.params;
   try {
-    const { stackTable } = req.body;
-    const { gigId } = req.params;
     const gig = await Gig.findOne({ where: { id: gigId } });
     const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
     // UNCOMMENT FOLLOWING FOR DEPLOYMENT
@@ -54,6 +54,12 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     // ["drums1@gmail.com"],
     res.status(200).json({ message: "Success!", callStack });
   } catch (err) {
+    if (err?.name === "SequelizeUniqueConstraintError") {
+      res
+        .status(400)
+        .json({ message: `Callstack already exists for gig ${gigId}.` });
+      return;
+    }
     res.status(500).json({ err });
   }
 });
@@ -65,6 +71,14 @@ router.get("/:gigId", validateSession, async (req, res) => {
   try {
     const query = await Gig.getGigInfo(gigId);
     if (query) {
+      const authorizedUsers = [
+        query.bandLeader.id,
+        ...query.bandMembers.map((user) => user.id),
+      ];
+      if (!authorizedUsers.includes(req.user.id)) {
+        res.status(403).json({ message: "⛔ You don't have access ⛔" });
+        return;
+      }
       res.status(200).json(query);
     } else {
       res.status(404).json({ message: "Gig not found" });

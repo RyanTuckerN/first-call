@@ -4,6 +4,97 @@ const { properize, returnTime, addHours } = require("../helpers/helpers");
 const nodemailer = require("nodemailer");
 
 /**
+ * @param {String} to email address
+ * @param {Number} emailCode 3 digit email code: {100: gig invite, 200: gig decline, 201: gig accept, 300: gig filled!, 301: gig has empty stack400: custom email}
+ * @param {Number} gigId id of Gig instance being referenced
+ * @param {String} senderEmail email address of person initiating message
+ * @param {Object} [options]  
+ * @param {String} options.role role the email is referencing, if applicable
+ * @param {String} options.body body of the email if emailCode is 400 (custom email)
+ * @param {String} options.subject subject of the email if emailCode is 400 (custom email)
+ * @returns {Promise} messageId from nodemailerdetails: {
+
+ }
+ */
+const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
+  if (!to || !emailCode || !gigId || !senderEmail) {
+    console.error("LOCATION: newEmail.js *** missing email arguments *** : ", {
+      to,
+      emailCode,
+      gigId,
+      senderEmail,
+      options,
+    });
+    return;
+  }
+  try {
+    const gig = await Gig.findOne({
+      where: { id: gigId },
+      include: { model: CallStack },
+    });
+
+    const receiver = await User.findOne({ where: { email: to } }); //might be undefined/null
+    // const sender = await User.findOne({ where: { id: senderId } });
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASSWORD,
+      },
+      // logger: true,
+      // debug: true
+    });
+
+    const { subject, html, details } = await emailController(
+      gig,
+      senderEmail,
+      emailCode,
+      options
+      );
+
+      //create a notification if the email address has an account associated with it
+    const notification = receiver?.id
+      ? await Notification.create({
+          text: subject,
+          userId: receiver.id,
+          details: { ...details, ...options },
+        })
+      : `${to} doesn't have an account yet.`;
+
+    const mailOptions = {
+      from: EMAIL_USER,
+      to, //email address
+      subject: subject,
+      html: html,
+    };
+
+    //FOR TESTING PURPOSES:
+    console.log(
+      "🔥🔥🌁 🌁 MOCK EMAIL 🌁 🌁🔥🔥: ",
+      mailOptions,
+      "NOTIFICATION: ",
+      notification
+    );
+    return mailOptions;
+
+    //UNCOMMENT THE FOLLOWING TO ACTUALLY SEND EMAILS!!!
+    // transporter.sendMail(mailOptions, (err, info) => {
+      //   if (err) {
+    //     console.error(err);
+    //     return {err}
+    //   } else {
+      //     console.log(`Email sent: ${info}.`);
+      //     return { info }
+
+      //   }
+    // });
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+/**
  *
  * @param {Object} gig instance of Gig model
  * @param {Object} sender instance of User model initiating message
@@ -114,7 +205,7 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       return {
         html: `<p><strong>Uh-oh!</strong> ${
           sender?.name ?? senderEmail
-        } declined your gig offer on ${gigDate.toLocaleDateString()} and now you ${
+        } declined your gig offer on ${gigDate.toLocaleDateString()} and now your ${
           options.role
         } stack is empty! Please add more email addresses to your stack. </p>`,
         subject: `firstCall: Your gig on ${gigDate.toLocaleDateString()} has an empty stack!`,
@@ -136,103 +227,6 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
   } catch (err) {
     console.error(err);
     return err;
-  }
-};
-
-// {role: {STRING} the email is in reference to, if applicable, body: {STRING} body of the email, if email code is 400, subject: {STRING} subject of email if code is 400}
-
-/**
- * @param {String} to email address
- * @param {Number} emailCode 3 digit email code: {100: gig invite, 
- * 200: gig decline, 
- * 201: gig accept, 
- * 300: gig filled!, 
- * 301: gig has empty stack
- * 400: custom email}
- * @param {Number} gigId id of Gig instance being referenced
- * @param {String} senderEmail email address of person initiating message
- * @param {Object} [options]  
- * @param {String} options.role role the email is referencing, if applicable
- * @param {String} options.body body of the email if emailCode is 400 (custom email)
- * @param {String} options.subject subject of the email if emailCode is 400 (custom email)
- * @returns {Promise} messageId from nodemailerdetails: {
-
-      }
- */
-const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
-  if (!to || !emailCode || !gigId || !senderEmail) {
-    console.error("LOCATION: newEmail.js *** missing email arguments *** : ", {
-      to,
-      emailCode,
-      gigId,
-      senderEmail,
-      options,
-    });
-    return;
-  }
-  try {
-    const gig = await Gig.findOne({
-      where: { id: gigId },
-      include: { model: CallStack },
-    });
-
-    const receiver = await User.findOne({ where: { email: to } }); //might be undefined/null
-    // const sender = await User.findOne({ where: { id: senderId } });
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASSWORD,
-      },
-      // logger: true,
-      // debug: true
-    });
-
-    const { subject, html, details } = await emailController(
-      gig,
-      senderEmail,
-      emailCode,
-      options
-    );
-
-    const notification = receiver?.id
-      ? await Notification.create({
-          text: subject,
-          userId: receiver.id,
-          details: { ...details, ...options },
-        })
-      : `${to} doesn't have an account yet.`;
-
-    const mailOptions = {
-      from: EMAIL_USER,
-      to, //email address
-      subject: subject,
-      html: html,
-    };
-
-    //FOR TESTING PURPOSES:
-    console.log(
-      "🔥🔥🌁 🌁 MOCK EMAIL 🌁 🌁🔥🔥: ",
-      mailOptions,
-      "NOTIFICATION: ",
-      notification
-    );
-    return mailOptions;
-
-    //UNCOMMENT THE FOLLOWING TO ACTUALLY SEND EMAILS!!!
-    // transporter.sendMail(mailOptions, (err, info) => {
-    //   if (err) {
-    //     console.error(err);
-    //     return {err}
-    //   } else {
-    //     console.log(`Email sent: ${info}.`);
-    //     return { info }
-
-    //   }
-    // });
-  } catch (err) {
-    console.log(err);
   }
 };
 

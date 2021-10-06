@@ -76,7 +76,7 @@ Gig.getGigInfo = async (gigId) => {
       where: { gigId }
     });
 
-    console.log(posts)
+    // console.log(posts)
     if (gig) {
       const response = {
         gig: {
