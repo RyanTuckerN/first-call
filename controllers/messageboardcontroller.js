@@ -3,8 +3,8 @@ const { Post } = require("../models");
 const router = express.Router();
 const validateSession = require("../middleware/validateSession");
 
-//ALL OF THESE NEED VALIDATION 
-//  -VALIDATESESSION MIDDLEWARE 
+//ALL OF THESE NEED VALIDATION
+//  -VALIDATESESSION MIDDLEWARE
 //  -AUTHENTICATION BASED ON req.user.id
 
 //new post
@@ -12,19 +12,23 @@ router.post("/:gigId/newPost/:childOf?", async (req, res) => {
   try {
     const { gigId, childOf } = req.params;
     const { text } = req.body;
+
     // const userId = req.user.id
     const userId = 3;
+    const parentPost = childOf
+      ? await Post.findOne({ where: { id: childOf } })
+      : null;
 
     const post = {
       author: userId,
       text,
-      childOf: childOf ?? null,
+      //Only add childOf column if there is a parent post
+      childOf: parentPost?.id ?? null,
       gigId: parseInt(gigId),
     };
-    
 
     const newPost = await Post.create(post);
-    
+
     res.status(200).json({ newPost });
   } catch (err) {
     res.status(500).json({ err });
@@ -35,7 +39,7 @@ router.post("/:gigId/newPost/:childOf?", async (req, res) => {
 router.post("/:gigId/post/:postId/upvote", async (req, res) => {
   const { gigId, postId } = req.params;
   // const userId = req.user.id
-  const userId = 221;
+  const userId = 1;
 
   try {
     const post = await Post.findOne({ where: { id: postId, gigId } });
@@ -117,7 +121,7 @@ router.post("/:gigId/post/:postId/edit", async (req, res) => {
     const post = await Post.findOne({
       where: { id: postId, gigId, author: userId },
     });
-    if (!post) {
+    if (!post || post.details.deleted) {
       res
         .status(403)
         .json({ message: `You must have gotten here on accident!` });
@@ -179,13 +183,16 @@ router.post("/:gigId/post/:postId/delete", async (req, res) => {
         `🔥🔥🔥 Post does not exist at "delete" post, messageboardcontroller.js`
       );
       return;
+    } else if (post.details.deleted) {
+      res.status(403).json({ message: `This post has already been deleted!` });
+      return;
     }
 
     //update the text and author, add details of deletion
     const update = await Post.update(
       {
         text: "deleted",
-        author: -1,
+        author: userId,
         details: {
           ...post.details,
           deleted: true,
@@ -209,14 +216,14 @@ router.post("/:gigId/post/:postId/delete", async (req, res) => {
 });
 
 //get all posts by gigId
-router.get('/:gigId', async(req,res)=>{
-  const {gigId} = req.params
-  const posts = await Post.findAndCountAll({where: {gigId}})
-  if(!posts.count){
-    res.status(404).json({message: 'no posts!'})
-    return
+router.get("/:gigId", async (req, res) => {
+  const { gigId } = req.params;
+  const posts = await Post.findAndCountAll({ where: { gigId } });
+  if (!posts.count) {
+    res.status(404).json({ message: "no posts!" });
+    return;
   }
-  res.status(200).json(posts)
-})
+  res.status(200).json({ count: posts.count, posts: posts.rows });
+});
 
 module.exports = router;
