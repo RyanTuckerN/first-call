@@ -30,6 +30,14 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
   const { stackTable } = req.body;
   const { gigId } = req.params;
   try {
+    const keys = Object.keys(stackTable);
+    const values = Object.values(stackTable).filter((a) => a);
+    if (keys.length === 0 || values.length !== keys.length) {
+      throw {
+        message: "improperly formed stackTable",
+        error: new Error("improperly formed stackTable"),
+      };
+    }
     const gig = await Gig.findOne({ where: { id: gigId } });
     const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
     // UNCOMMENT FOLLOWING FOR DEPLOYMENT
@@ -60,7 +68,8 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
         .json({ message: `Callstack already exists for gig ${gigId}.` });
       return;
     }
-    res.status(500).json({ err });
+    res.status(500).json(err);
+    console.error(err);
   }
 });
 
