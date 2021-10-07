@@ -7,11 +7,12 @@ const validateSession = require("../middleware/validateSession");
 
 //SIGNUP FOR NEW USER
 router.post("/signup", (req, res) => {
-  const { password, email } = req.body;
+  const { password, email, name } = req.body;
 
   User.create({
     passwordhash: bcrypt.hashSync(password, 13),
     email,
+    name
   })
     .then((user) => {
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {

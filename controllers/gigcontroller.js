@@ -46,7 +46,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
       };
     }
     const gig = await Gig.findOne({ where: { id: gigId } });
-    const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
+    const gigOwner = await User.findOne({ where: { id: gig?.ownerId } });
 
     if (gig.ownerId != req.user.id) {
       res.status(403).json({ message: "Not Authorized!" });
@@ -54,6 +54,12 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     }
 
     const callStack = await CallStack.newStackTable(stackTable, gigId);
+    if(!callStack.stackTable.bandLeader){
+      callStack.stackTable.bandLeader = {confirmed: gigOwner.email, filled: true}
+    }
+    await Gig.addUserToGig(gig.ownerId, gig.id)
+
+    console.log(callStack)
 
     /*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
      *** *** *** *** *** *** DO I NEED TO DO THIS LIKE THIS? *** *** *** *** *** ***
@@ -61,6 +67,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
      *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***/
     // const sendEmails = async () => {
     roles.forEach(async (role) => {
+      if(role === 'bandLeader')return
       const { onCall } = callStack.stackTable[role];
       // send a new email!
       await newEmail(onCall, 100, gigId, gigOwner.email, { role });

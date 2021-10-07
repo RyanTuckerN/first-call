@@ -3,10 +3,17 @@ import { properize } from "./helpers.js";
 const tokens = []
 const userSeeder = async () => {
   try {
-    for (let i = 1; i <= 50; i++) {
+    for (let i = 1; i <= 5; i++) {
+
+      const randomUser = await fetch(`https://randomuser.me/api/`)
+      const randomJson = await randomUser.json()
+      const randomName = randomJson.results[0].name.first + " " + randomJson.results[0].name.last 
+      console.log(randomJson)
+
       const userBody = {
         email: `user${i}@email.com`,
         password: "password",
+        name: randomName
       };
       const userResults = await fetch(`http://localhost:3333/user/signup`, {
         method: "POST",
@@ -54,16 +61,16 @@ const userSeeder = async () => {
         const callStackBody = {
           stackTable: {
             saxophone: [
-              `user${Math.round(Math.random() * 50)}@email.com`,
-              `user${Math.round(Math.random() * 50)}@email.com`,
+              `user${Math.round(Math.random() * 5)}@email.com`,
+              `user${Math.round(Math.random() * 5)}@email.com`,
             ],
             drums: [
-              `user${Math.round(Math.random() * 50)}@email.com`,
-              `user${Math.round(Math.random() * 50)}@email.com`,
+              `user${Math.round(Math.random() * 5)}@email.com`,
+              `user${Math.round(Math.random() * 5)}@email.com`,
             ],
             accordian: [
-              `user${Math.round(Math.random() * 50)}@email.com`,
-              `user${Math.round(Math.random() * 50)}@email.com`,
+              `user${Math.round(Math.random() * 5)}@email.com`,
+              `user${Math.round(Math.random() * 5)}@email.com`,
             ],
           },
         };
@@ -1193,9 +1200,9 @@ await userSeeder();
 
 console.log(tokens)
 const responsesSeeder = async() => {
-  for(let i = 0; i <=165; i++){
-    for(let i = 0; i < tokens.length; i++){
-      const sax = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*50)}/addUser/${tokens[i].id}/saxophone`, {
+  for(let i = 0; i < 5; i++){
+    for(let j = 0; j < tokens.length*10; j++){
+      const sax = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/addUser/${tokens[i].id}/saxophone`, {
           method: "POST",
           mode: "cors",
           headers: {
@@ -1203,7 +1210,7 @@ const responsesSeeder = async() => {
             Authorization: tokens[i].sessionToken,
           },
       })
-      const drums = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*50)}/addUser/${tokens[i].id}/drums`, {
+      const drums = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/addUser/${tokens[i].id}/drums`, {
           method: "POST",
           mode: "cors",
           headers: {
@@ -1211,7 +1218,7 @@ const responsesSeeder = async() => {
             Authorization: tokens[i].sessionToken,
           },
       })
-      const accordian = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*50)}/addUser/${tokens[i].id}/accordian`, {
+      const accordian = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/addUser/${tokens[i].id}/accordian`, {
         method: "POST",
         mode: "cors",
         headers: {
@@ -1219,7 +1226,7 @@ const responsesSeeder = async() => {
           Authorization: tokens[i].sessionToken,
         },
       })
-      const sax2 = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*50)}/decline/${tokens[i].id}/saxophone`, {
+      const sax2 = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/decline/${tokens[i].id}/saxophone`, {
           method: "POST",
           mode: "cors",
           headers: {
@@ -1227,7 +1234,7 @@ const responsesSeeder = async() => {
             Authorization: tokens[i].sessionToken,
           },
       })
-      const drums2 = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*50)}/decline/${tokens[i].id}/drums`, {
+      const drums2 = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/decline/${tokens[i].id}/drums`, {
           method: "POST",
           mode: "cors",
           headers: {
@@ -1235,7 +1242,7 @@ const responsesSeeder = async() => {
             Authorization: tokens[i].sessionToken,
           },
       })
-      const accordian2 = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*50)}/decline/${tokens[i].id}/accordian`, {
+      const accordian2 = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/decline/${tokens[i].id}/accordian`, {
         method: "POST",
         mode: "cors",
         headers: {

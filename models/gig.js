@@ -50,7 +50,7 @@ Gig.addUserToGig = async (userId, gigId) => {
         response.message = `Something went wrong! That user has probably already been added to that gig.`;
       }
     }
-    
+
     return response;
   } catch (err) {
     return err;
@@ -70,10 +70,12 @@ Gig.addUserToGig = async (userId, gigId) => {
  */
 Gig.getGigInfo = async (gigId) => {
   try {
-    const gig = await Gig.findOne({ where: { id: gigId }});
-    const posts = await sequelize.models.post.findAndCountAll({where: {gigId}})
+    const gig = await Gig.findOne({ where: { id: gigId } });
+    const posts = await sequelize.models.post.findAndCountAll({
+      where: { gigId },
+    });
     const callStack = await sequelize.models.callStack.findOne({
-      where: { gigId }
+      where: { gigId },
     });
 
     // console.log(posts)
@@ -85,22 +87,34 @@ Gig.getGigInfo = async (gigId) => {
           payment: gig.payment,
           optionalInfo: gig.optionalInfo,
           callStack: callStack ?? "no callstack created yet",
-          posts
+          posts,
         },
       };
 
       response.bandLeader = await sequelize.models.user.findOne({
         where: { id: gig.ownerId },
-        attributes: ["id", "email"],
+        attributes: ["id", "email", "name"],
       });
+
+      //find all users that have an account
       const users = await gig.getUsers();
 
-      response.bandMembers = users.map((user) => {
-        return {
-          id: user.id,
-          email: user.email,
-        };
-      });
+      //filter out owner, and map over members returning only their email addresses and ids
+      response.bandMembers = users
+        .filter((user) => user.id !== gig.ownerId)
+        .map((user) => {
+          return user.name
+          //include name if user has added it
+            ? {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+              }
+            : {
+                id: user.id,
+                email: user.email,
+              };
+        });
       // response.users = users;
       return response;
     } else {
