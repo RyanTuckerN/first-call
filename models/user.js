@@ -19,6 +19,4 @@ const User = sequelize.define("user", {
   specialties: DataTypes.ARRAY(DataTypes.STRING(20)),
 });
 
-
-
 module.exports = User;

@@ -30,9 +30,16 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
   const { stackTable } = req.body;
   const { gigId } = req.params;
   try {
-    const keys = Object.keys(stackTable);
-    const values = Object.values(stackTable).filter((a) => a);
-    if (keys.length === 0 || values.length !== keys.length) {
+    const [roles, stacks] = [
+      Object.keys(stackTable),
+      Object.values(stackTable),
+    ];
+    if (
+      //if no roles are defined in request
+      roles.length === 0 ||
+      //if the callstacks are not arrays
+      !stacks.every((stack) => Array.isArray(stack))
+    ) {
       throw {
         message: "improperly formed stackTable",
         error: new Error("improperly formed stackTable"),
@@ -40,26 +47,31 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     }
     const gig = await Gig.findOne({ where: { id: gigId } });
     const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
-    // UNCOMMENT FOLLOWING FOR DEPLOYMENT
+
     if (gig.ownerId != req.user.id) {
       res.status(403).json({ message: "Not Authorized!" });
       return;
     }
 
-    //model method 'newStackTable' takes the request body and organizes it into a more detailed object
-    //CallStackModel will set the properties of that 'callStack' model instance to a class instance with methods
-    //these methods will be used to control changes to the callStack
     const callStack = await CallStack.newStackTable(stackTable, gigId);
-    const GigStack = new CallStackModel(callStack);
-    const roles = GigStack.returnRoles();
+
+    /*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+     *** *** *** *** *** *** DO I NEED TO DO THIS LIKE THIS? *** *** *** *** *** ***
+     *** *** *** OR WILL MY CODE AWAIT THIS BLOCK OUTSIDE OF ITS SCOPE?* *** *** ***
+     *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***/
+    // const sendEmails = async () => {
     roles.forEach(async (role) => {
-      const { onCall } = GigStack.stackTable[role];
+      const { onCall } = callStack.stackTable[role];
       // send a new email!
       await newEmail(onCall, 100, gigId, gigOwner.email, { role });
     });
+    // };
+    // await sendEmails();
+    /*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+     *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+     *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***/
 
     console.log(callStack);
-    // ["drums1@gmail.com"],
     res.status(200).json({ message: "Success!", callStack });
   } catch (err) {
     if (err?.name === "SequelizeUniqueConstraintError") {
@@ -106,9 +118,9 @@ router.post(
 
     try {
       const gig = await Gig.findOne({ where: { id: gigId } });
+      const callStack = await CallStack.findOne({ where: { gigId } });
       const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
       const user = await User.findOne({ where: { id: userId } });
-      const callStack = await CallStack.findOne({ where: { gigId } });
 
       //converts callStack to CallStack instance, with methods included
       const GigStack = new CallStackModel(callStack);
@@ -124,23 +136,16 @@ router.post(
         res.status(403).json({
           message: "You are not on call for this gig!",
         });
-      } else
-        try {
-          GigStack.setStackFilled(role);
-          GigStack.checkFilled();
-          if (GigStack.filled) {
-            await newEmail(gigOwner.email, 300, gigId, user.email, { role });
-          } else
-            await newEmail(gigOwner.email, 201, gigId, user.email, { role });
+        return
+      } else GigStack.setStackFilled(role);
+      GigStack.checkFilled();
+      GigStack.filled
+        ? await newEmail(gigOwner.email, 300, gigId, user.email, { role })
+        : await newEmail(gigOwner.email, 201, gigId, user.email, { role });
 
-          await Gig.addUserToGig(userId, gigId);
-          await CallStack.update(GigStack, {
-            where: { gigId },
-          });
-          res.status(200).json({ updatedStack: GigStack });
-        } catch (err) {
-          res.status(500).json({ err });
-        }
+      await Gig.addUserToGig(userId, gigId);
+      await CallStack.update(GigStack, { where: { gigId } });
+      res.status(200).json({ updatedStack: GigStack });
     } catch (err) {
       res.status(500).json({ err });
     }
@@ -257,7 +262,7 @@ router.post(
     const { gigId, role } = req.params;
     const { calls } = req.body;
     try {
-      const gig = await Gig.findOne({
+      const gig = await Gig.findOne({ 
         where: { id: gigId, ownerId: req.user.id },
         include: { model: CallStack },
       });
@@ -294,6 +299,18 @@ router.post(
   }
 );
 
+router.get("/test/test", async (req, res) => {
+  try {
+    const query = await User.findAndCountAll({include: {all: true, nested: true}})
+    // await User.findOne({
+      // where: { gigId: 1 },
+      // include: [{ model: User }, { model: CallStack }],
+    // });
+    res.status(200).json(query);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
 // router.get("/email/:gigId", validateSession, async (req, res) => {
 //   try {
 //     const { to, emailCode, sender, options } = req.body;

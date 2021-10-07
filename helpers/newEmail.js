@@ -12,22 +12,24 @@ const nodemailer = require("nodemailer");
  * @param {String} options.role role the email is referencing, if applicable
  * @param {String} options.body body of the email if emailCode is 400 (custom email)
  * @param {String} options.subject subject of the email if emailCode is 400 (custom email)
- * @returns {Promise} messageId from nodemailerdetails: {
-
- }
+ * @returns {Promise} messageId from nodemailer
  */
 const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
-  if (!to || !emailCode || !gigId || !senderEmail) {
-    console.error("LOCATION: newEmail.js *** missing email arguments *** : ", {
-      to,
-      emailCode,
-      gigId,
-      senderEmail,
-      options,
-    });
-    return;
-  }
   try {
+    if (!to || !emailCode || !gigId || !senderEmail) {
+      const error = new Error(
+        "LOCATION: newEmail.js *** incorrect email arguments ***"
+      );
+      error.details = {
+        to,
+        emailCode,
+        gigId,
+        senderEmail,
+        options,
+      }
+      console.log(error)
+      throw error;
+    }
     const gig = await Gig.findOne({
       where: { id: gigId },
       include: { model: CallStack },
@@ -51,9 +53,9 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
       senderEmail,
       emailCode,
       options
-      );
+    );
 
-      //create a notification if the email address has an account associated with it
+    //create a notification if the email address has an account associated with it
     const notification = receiver?.id
       ? await Notification.create({
           text: subject,
@@ -80,14 +82,14 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
 
     //UNCOMMENT THE FOLLOWING TO ACTUALLY SEND EMAILS!!!
     // transporter.sendMail(mailOptions, (err, info) => {
-      //   if (err) {
+    //   if (err) {
     //     console.error(err);
     //     return {err}
     //   } else {
-      //     console.log(`Email sent: ${info}.`);
-      //     return { info }
+    //     console.log(`Email sent: ${info}.`);
+    //     return { info }
 
-      //   }
+    //   }
     // });
   } catch (err) {
     console.log(err);
