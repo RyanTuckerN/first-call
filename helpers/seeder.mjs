@@ -24,19 +24,20 @@ const userSeeder = async () => {
         },
       });
       const userJson = await userResults.json();
-      console.log(userJson);
+      // console.log(userJson);
       const { sessionToken, user } = userJson;
+      console.log(userJson)
       // const { id, email } = user;
       tokens.push({id: user.id, sessionToken})
 
-      for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
         const randomNum = Math.round(Math.random() * 500);
 
         const gigBody = {
           description: `${properize(adjectives[randomNum * 2])} concert`,
           date: "2021-12-24 18:30:00.543-04",
           payment: randomNum - (randomNum % 25) + 50,
-          location: `${randomNum + 1200} Main Street`,
+          location: `${randomNum + 1200} ${properize(adjectives[randomNum])} Street`,
           optionalInfo: {
             attire: "Business casual",
             meal: "Box lunch",
@@ -54,7 +55,7 @@ const userSeeder = async () => {
           },
         });
         const gigJson = await gigResults.json();
-        console.log(gigJson.newGig);
+        // console.log(gigJson.newGig);
 
         const gigId = gigJson.newGig.id;
 
@@ -87,7 +88,8 @@ const userSeeder = async () => {
           }
         );
         const stackJson = await callStackResults.json();
-        console.log(stackJson);
+        // console.log(stackJson);
+        console.log(i, j)
       }
     }
   } catch (err) {
@@ -1251,7 +1253,7 @@ const responsesSeeder = async() => {
         },
       })
       const jsons = await Promise.all([accordian.json(), sax.json(), drums.json(),accordian2.json(), sax2.json(), drums2.json(), ])
-      console.log(jsons)
+      console.log(i, j)
     }}
   
 }

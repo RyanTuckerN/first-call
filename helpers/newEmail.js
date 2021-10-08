@@ -48,6 +48,8 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
       // debug: true
     });
 
+    options.to = to
+    
     const { subject, html, details } = await emailController(
       gig,
       senderEmail,
@@ -102,10 +104,11 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
  * @param {Object} sender instance of User model initiating message
  * @param {Number} emailCode 3 digit email code
  * @param {Object} [options]
+ * @param {String} options.to email address of recipient
  * @param {String} options.role role the email is referencing, if applicable
  * @param {String} options.body body of the email if emailCode is 400 (custom email)
  * @param {String} options.subject subject of the email if emailCode is 400 (custom email)
- * @returns {Object} containing 'html' and 'subject', both Strings
+ * @returns {Object} containing 'html' and 'subject', both Strings and details, an object
  */
 const emailController = async (gig, senderEmail, emailCode, options) => {
   const gigDate = new Date(gig.date);
@@ -148,9 +151,7 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
      * SHOULD TAKE USER APP RUN A FETCH FROM INSIDE APP DEPENDING ON LINK CLICKED
      *************************************************************/
       return {
-        html: `<h4>${
-          sender?.name ?? senderEmail
-        } is inviting you to a gig! </h4>
+        html: `<h4>${details.sender} is inviting you to a gig! </h4>
    <h6> ${gigDate.toLocaleDateString()}, ${returnTime(gigDate)} </h6>
    
    <div>  
@@ -162,41 +163,35 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
      </dl>
    </div>
    <div>
-     <a href='www.google.com'>Click here to accept the offer</a>
+     <a href='www.fistcallclient.com/acceptGig/?email=${options.to}&gigId=${gig.id}&role=${options.role}'>Click here to accept the offer</a>
    </div>
    <div>
-     <a href='www.bing.com'>Click here to decline the offer</a>
+     <a href='www.fistcallclient.com/declineGig/?email=${options.to}&gigId=${gig.id}&role=${options.role}'>Click here to decline the offer</a>
    </div>`,
-        subject: `Gig request from ${sender?.name ?? senderEmail}`,
+        subject: `Gig request from ${details.sender}`,
         details,
       };
     }
     if (emailCode === 200) {
       //user declined gig
       return {
-        html: `<p>${sender?.name ?? senderEmail} cannot do the gig! </p>`,
-        subject: `${
-          sender?.name ?? senderEmail
-        } has turned down a gig offer on ${gigDate.toLocaleDateString()}.`,
+        html: `<p>${details.sender} cannot do the gig! </p>`,
+        subject: `${details.sender} has turned down a gig offer on ${gigDate.toLocaleDateString()}.`,
         details,
       };
     }
     if (emailCode === 201) {
       //user accepted gig
       return {
-        html: `<p>${sender?.name ?? senderEmail} has accepted your offer! </p>`,
-        subject: `Score!!! ${
-          sender?.name ?? senderEmail
-        } can do the gig on ${gigDate.toLocaleDateString()}.`,
+        html: `<p>${details.sender} has accepted your offer! </p>`,
+        subject: `Score!!! ${details.sender} can do the gig on ${gigDate.toLocaleDateString()}.`,
         details,
       };
     }
     if (emailCode === 300) {
       //gig is fully booked
       return {
-        html: `<p>${
-          sender?.name ?? senderEmail
-        } has accepted your offer, and with that, your gig is fully booked! Hooray! </p>`,
+        html: `<p>${details.sender} has accepted your offer, and with that, your gig is fully booked! Hooray! </p>`,
         subject: `Score!!! the gig on ${gigDate.toLocaleDateString()} has been filled!`,
         details,
       };
@@ -205,11 +200,8 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //gig has empty stack
 
       return {
-        html: `<p><strong>Uh-oh!</strong> ${
-          sender?.name ?? senderEmail
-        } declined your gig offer on ${gigDate.toLocaleDateString()} and now your ${
-          options.role
-        } stack is empty! Please add more email addresses to your stack. </p>`,
+        html: `<p><strong>Uh-oh!</strong> ${details.sender} declined your gig offer on ${gigDate.toLocaleDateString()} 
+        and now your ${options.role} stack is empty! Please add more email addresses to your stack. </p>`,
         subject: `firstCall: Your gig on ${gigDate.toLocaleDateString()} has an empty stack!`,
         details,
       };
