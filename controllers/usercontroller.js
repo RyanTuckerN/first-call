@@ -1,5 +1,5 @@
 const express = require("express");
-const { User } = require("../models");
+const { User, Gig, CallStack } = require("../models");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -12,7 +12,7 @@ router.post("/signup", (req, res) => {
   User.create({
     passwordhash: bcrypt.hashSync(password, 13),
     email,
-    name
+    name,
   })
     .then((user) => {
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
@@ -60,19 +60,37 @@ router.post("/login", (req, res) => {
 
 //EDIT/ADD PROFILE TO USER ACCOUNT
 router.put("/profile", validateSession, async (req, res) => {
-  const { email, role, name, description, location, paymentPreference, specialties } = req.body;
+  const {
+    email,
+    role,
+    name,
+    description,
+    location,
+    paymentPreference,
+    specialties,
+  } = req.body;
   const { id } = req.user;
-  const updateUser = { email, role, name, description, location, paymentPreference, specialties };
+  const updateUser = {
+    email,
+    role,
+    name,
+    description,
+    location,
+    paymentPreference,
+    specialties,
+  };
   const query = { where: { id } };
   try {
     const result = await User.update(updateUser, query);
     if (!result[0]) {
-      res.status(403).json({ message: 'Account not found' });
+      res.status(403).json({ message: "Account not found" });
     } else {
-      res.status(200).json({ message: `${email}'s profile has been updated!'`});
+      res
+        .status(200)
+        .json({ message: `${email}'s profile has been updated!'` });
     }
   } catch (err) {
-    res.status(500).json({ message: "Oops, something went wrong!",err });
+    res.status(500).json({ message: "Oops, something went wrong!", err });
   }
 });
 

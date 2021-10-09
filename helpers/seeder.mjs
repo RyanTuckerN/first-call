@@ -62,16 +62,16 @@ const userSeeder = async () => {
         const callStackBody = {
           stackTable: {
             saxophone: [
-              `user${Math.round(Math.random() * 5)}@email.com`,
-              `user${Math.round(Math.random() * 5)}@email.com`,
+              `user${Math.round(Math.random() * 6)}@email.com`,
+              `user${Math.round(Math.random() * 6)}@email.com`,
             ],
             drums: [
-              `user${Math.round(Math.random() * 5)}@email.com`,
-              `user${Math.round(Math.random() * 5)}@email.com`,
+              `user${Math.round(Math.random() * 6)}@email.com`,
+              `user${Math.round(Math.random() * 6)}@email.com`,
             ],
             accordian: [
-              `user${Math.round(Math.random() * 5)}@email.com`,
-              `user${Math.round(Math.random() * 5)}@email.com`,
+              `user${Math.round(Math.random() * 6)}@email.com`,
+              `user${Math.round(Math.random() * 6)}@email.com`,
             ],
           },
         };

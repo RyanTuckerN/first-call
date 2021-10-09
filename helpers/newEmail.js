@@ -8,7 +8,7 @@ const nodemailer = require("nodemailer");
  * @param {Number} emailCode 3 digit email code: {100: gig invite, 200: gig decline, 201: gig accept, 300: gig filled!, 301: gig has empty stack400: custom email}
  * @param {Number} gigId id of Gig instance being referenced
  * @param {String} senderEmail email address of person initiating message
- * @param {Object} [options]  
+ * @param {Object?} [options]  
  * @param {String} options.role role the email is referencing, if applicable
  * @param {String} options.body body of the email if emailCode is 400 (custom email)
  * @param {String} options.subject subject of the email if emailCode is 400 (custom email)
@@ -49,6 +49,7 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
     });
 
     options.to = to
+    options.receiverExists = receiver ? true : false
     
     const { subject, html, details } = await emailController(
       gig,
@@ -100,15 +101,16 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
 
 /**
  *
- * @param {Object} gig instance of Gig model
- * @param {Object} sender instance of User model initiating message
- * @param {Number} emailCode 3 digit email code
- * @param {Object} [options]
- * @param {String} options.to email address of recipient
- * @param {String} options.role role the email is referencing, if applicable
- * @param {String} options.body body of the email if emailCode is 400 (custom email)
- * @param {String} options.subject subject of the email if emailCode is 400 (custom email)
- * @returns {Object} containing 'html' and 'subject', both Strings and details, an object
+ * @param {object} gig instance of Gig model
+ * @param {object} sender instance of User model initiating message
+ * @param {number} emailCode 3 digit email code
+ * @param {object} [options]
+ * @param {string} options.to email address of recipient
+ * @param {string} options.role role the email is referencing, if applicable
+ * @param {string} options.body body of the email if emailCode is 400 (custom email)
+ * @param {string} options.subject subject of the email if emailCode is 400 (custom email)
+ * @param {boolean} options.receiverExists for conditional email content
+ * @returns {object} containing 'html' and 'subject', both Strings and details, an object
  */
 const emailController = async (gig, senderEmail, emailCode, options) => {
   const gigDate = new Date(gig.date);
@@ -118,6 +120,8 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
     // console.log('sender in newEmail.js', sender?.dataValues)
     // console.log("📦 📦 📦 gig object in emailController: ", gig.callStack);
 
+    console.log('🚒🚒🚒USER EXISTS??? :', options.receiverExists)
+ 
     const details = {
       sender: sender?.name ?? senderEmail,
       dateTime: gigDate,
@@ -150,6 +154,10 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
      * LINKS WILL DEPEND ON FRONT END CODE
      * SHOULD TAKE USER APP RUN A FETCH FROM INSIDE APP DEPENDING ON LINK CLICKED
      *************************************************************/
+
+     //here, I can change the URL sent based on {options.receiverExists} Boolean. 
+     //If so, they can go to their page and accept. 
+     //Otherwise, they get a link that will let them accept without account
       return {
         html: `<h4>${details.sender} is inviting you to a gig! </h4>
    <h6> ${gigDate.toLocaleDateString()}, ${returnTime(gigDate)} </h6>
@@ -176,7 +184,8 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //user declined gig
       return {
         html: `<p>${details.sender} cannot do the gig! </p>`,
-        subject: `${details.sender} has turned down a gig offer on ${gigDate.toLocaleDateString()}.`,
+        subject: `${details.sender} has turned down a gig offer on ${gigDate.toLocaleDateString()}. Sending invitation to ${options
+        .nextUser}`,
         details,
       };
     }

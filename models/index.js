@@ -2,14 +2,13 @@ const User = require('./user')
 const Gig = require('./gig')
 const Notification = require('./notification')
 const CallStack = require('./callStack')
-// const Board = require('./board')
-// const MessageBoard = require('./messageBoard')
 const Post = require('./post')
 
 Gig.hasOne(CallStack)
-// Gig.hasOne(MessageBoard)
 CallStack.belongsTo(Gig)
-// MessageBoard.belongsTo(Gig)
+
+User.hasMany(Gig, {foreignKey: 'ownerId'})
+Gig.belongsTo(User, {foreignKey: 'ownerId'})
 
 Gig.hasMany(Post)
 Post.belongsTo(Gig)
@@ -29,6 +28,5 @@ module.exports = {
   Gig, 
   Notification,
   CallStack,
-  // MessageBoard,
   Post
 }

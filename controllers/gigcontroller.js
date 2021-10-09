@@ -318,16 +318,18 @@ router.get("/test/test", async (req, res) => {
     res.status(500).json(err);
   }
 });
-// router.get("/email/:gigId", validateSession, async (req, res) => {
-//   try {
-//     const { to, emailCode, sender, options } = req.body;
-//     const { gigId } = req.params;
-//     await newEmail(to, emailCode, gigId, sender, options);
-//     res.status(200).json({ message: 'I did my part! Not sure if it worked lol' });
-//   } catch (err) {
-//     console.log(err);
-//     res.status(500).json({ message: 'Something went wrong', err });
-//   }
-// });
+
+
+router.get("/email/:gigId", validateSession, async (req, res) => {
+  try {
+    const { to, emailCode, sender, options } = req.body;
+    const { gigId } = req.params;
+    await newEmail(to, emailCode, gigId, sender, options);
+    res.status(200).json({ message: 'I did my part! Not sure if it worked lol' });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: 'Something went wrong', err });
+  }
+});
 
 module.exports = router;

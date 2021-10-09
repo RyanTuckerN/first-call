@@ -1,11 +1,11 @@
 const user = require("./usercontroller");
 const gig = require("./gigcontroller")
-// const notification = require("./notificationcontroller")
 const messageboard = require("./messageboardcontroller")
+const open = require('./opencontroller')
 
 module.exports = { 
   user, 
   gig, 
-  // notification,
-  messageboard
+  messageboard,
+  open
 };
