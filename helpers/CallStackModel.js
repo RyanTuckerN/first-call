@@ -1,3 +1,6 @@
+// const { Gig } = require("../models");
+const sequelize = require("../db");
+
 module.exports = class CallStackModel {
   /**
    *
@@ -10,6 +13,7 @@ module.exports = class CallStackModel {
     this.filled = filled;
     this.stackTable = stackTable;
     this.gigId = gigId;
+  
   }
 
   /**
@@ -64,12 +68,19 @@ module.exports = class CallStackModel {
    */
   returnNext(role) {
     const next = this.stackTable[role].calls.shift();
+
     if (!next) {
       this.stackTable[role].emptyStack = true;
-      delete this.stackTable[role].onCall;
+      this.stackTable[role].onCall = null;
+      const openCalls = this.returnRoles()
+        .map((r) => this.stackTable[r].onCall)
+        //remove nulls
+        .filter((a) => a);
       return "Empty stack!";
     }
+
     this.stackTable[role].onCall = next;
+    
     return next;
   }
 
@@ -80,10 +91,10 @@ module.exports = class CallStackModel {
    * @returns {Object} contains keys 'updatedStack' {Array}, current onCall {String}, and *option* message if applicable
    */
   addCallToStack(role, call) {
-    //if the role doesn't exist create it. 
+    //if the role doesn't exist create it.
     if (!this.returnRoles().includes(role)) {
       if (Array.isArray(call)) {
-        //if call argument is an array, use it in addRole method 
+        //if call argument is an array, use it in addRole method
         //change name from 'call' to 'calls' because it is an array
         const calls = call;
         this.addRoleToStackTable(role, calls);
@@ -91,12 +102,14 @@ module.exports = class CallStackModel {
         //if call argument is string as expected, add it to an array
         this.addRoleToStackTable(role, [call]);
       }
-      if(this.stackTable[role].onCall === null){this.returnNext(role)}
+      if (this.stackTable[role].onCall === null) {
+        this.returnNext(role);
+      }
       return {
         stack: this.stackTable[role].calls,
         onCall: this.stackTable[role].onCall,
         message: "The stack didn't exist, but it does now.",
-      }
+      };
     }
 
     //if call argument is an array, push each address therein to callStack
@@ -104,8 +117,9 @@ module.exports = class CallStackModel {
       const calls = call;
       //recursive?
       calls.forEach((c) => this.addCallToStack(role, c));
-      if(this.stackTable[role].onCall === null){this.returnNext(role)}
-
+      if (this.stackTable[role].onCall === null) {
+        this.returnNext(role);
+      }
 
       return {
         stack: this.stackTable[role].calls,
@@ -124,7 +138,7 @@ module.exports = class CallStackModel {
         onCall: this.stackTable[role].onCall,
         message: "This call already existed here.",
       };
-    } 
+    }
 
     //otherwise do add it
     else {
@@ -133,12 +147,13 @@ module.exports = class CallStackModel {
         this.returnNext(role);
         this.stackTable[role].emptyStack = false;
       }
-      if(this.stackTable[role].onCall === null){this.returnNext(role)}
+      if (this.stackTable[role].onCall === null) {
+        this.returnNext(role);
+      }
       return {
         stack: this.stackTable[role].calls,
         onCall: this.stackTable[role].onCall,
         message: `${call} added successfully`,
-
       };
     }
   }
@@ -150,11 +165,11 @@ module.exports = class CallStackModel {
    * @returns {Object} all values associated with new role
    */
   addRoleToStackTable(role, calls = []) {
-    if(!Array.isArray(calls) && typeof calls !== 'string'){
-      return -1
+    if (!Array.isArray(calls) && typeof calls !== "string") {
+      return -1;
     }
 
-    if (!Array.isArray(calls) && typeof calls === 'string') {
+    if (!Array.isArray(calls) && typeof calls === "string") {
       calls = [calls];
     }
 
@@ -183,7 +198,7 @@ module.exports = class CallStackModel {
 
   //logs whole gigStack
   log() {
-    console.log(this)
+    console.log(this);
   }
 
   /**
@@ -207,7 +222,7 @@ module.exports = class CallStackModel {
    * @returns {Boolean}
    */
   checkFilled() {
-    const roles = this.returnRoles()
+    const roles = this.returnRoles();
     const mappedRoles = roles.map((role) => this.stackTable[role].filled);
     // console.log('MAPPEDROLES: ',mappedRoles)
     let response;

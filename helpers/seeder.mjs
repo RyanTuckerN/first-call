@@ -1202,7 +1202,7 @@ await userSeeder();
 
 console.log(tokens)
 const responsesSeeder = async() => {
-  for(let i = 0; i < 5; i++){
+  for(let i = 1; i < 5; i++){
     for(let j = 0; j < tokens.length*10; j++){
       const sax = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/addUser/${tokens[i].id}/saxophone`, {
           method: "POST",

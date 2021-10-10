@@ -21,5 +21,5 @@ app.use("/open", controllers.open)
 app.use("/", (req, res) =>
   res
     .status(200)
-    .json({ message: `App is up and running on port ${PORT}, check your endpoint!!`, server })
+    .json({ message: `App is up and running on port ${PORT}`, server })
 );

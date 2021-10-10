@@ -60,38 +60,28 @@ router.post("/login", (req, res) => {
 
 //EDIT/ADD PROFILE TO USER ACCOUNT
 router.put("/profile", validateSession, async (req, res) => {
-  const {
-    email,
-    role,
-    name,
-    description,
-    location,
-    paymentPreference,
-    specialties,
-  } = req.body;
   const { id } = req.user;
-  const updateUser = {
-    email,
-    role,
-    name,
-    description,
-    location,
-    paymentPreference,
-    specialties,
-  };
-  const query = { where: { id } };
   try {
-    const result = await User.update(updateUser, query);
+    const result = await User.update(req.body, { where: { id } });
     if (!result[0]) {
       res.status(403).json({ message: "Account not found" });
     } else {
-      res
-        .status(200)
-        .json({ message: `${email}'s profile has been updated!'` });
+      res.status(200).json({ message: `Profile ${id} has been updated.'` });
     }
   } catch (err) {
     res.status(500).json({ message: "Oops, something went wrong!", err });
   }
 });
+
+// router.get("/offers", validateSession, async (req, res) => {
+//   const { id } = req.user;
+//   try {
+//     const offers = await 
+
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json(err);
+//   }
+// });
 
 module.exports = router;

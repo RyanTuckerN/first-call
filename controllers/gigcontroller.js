@@ -54,26 +54,29 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     }
 
     const callStack = await CallStack.newStackTable(stackTable, gigId);
-    if(!callStack.stackTable.bandLeader){
-      callStack.stackTable.bandLeader = {confirmed: gigOwner.email, filled: true}
+    if (!callStack.stackTable.bandLeader) {
+      callStack.stackTable.bandLeader = {
+        confirmed: gigOwner.email,
+        filled: true,
+      };
     }
-    await Gig.addUserToGig(gig.ownerId, gig.id)
+    await Gig.addUserToGig(gig.ownerId, gig.id);
 
-    console.log(callStack)
+    console.log(callStack);
 
     /*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
      *** *** *** *** *** *** DO I NEED TO DO THIS LIKE THIS? *** *** *** *** *** ***
      *** *** *** OR WILL MY CODE AWAIT THIS BLOCK OUTSIDE OF ITS SCOPE?* *** *** ***
      *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***/
-    // const sendEmails = async () => {
+    const sendEmails = async () => {
     roles.forEach(async (role) => {
-      if(role === 'bandLeader')return
+      if (role === "bandLeader") return;
       const { onCall } = callStack.stackTable[role];
       // send a new email!
       await newEmail(onCall, 100, gigId, gigOwner.email, { role });
     });
-    // };
-    // await sendEmails();
+    };
+    await sendEmails();
     /*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
      *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
      *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***/
@@ -124,9 +127,13 @@ router.post(
     const { userId, gigId, role } = req.params;
 
     try {
-      const gig = await Gig.findOne({ where: { id: gigId } });
-      const callStack = await CallStack.findOne({ where: { gigId } });
-      const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
+      const gig = await Gig.findOne({
+        where: { id: gigId },
+        include: {all: true, nested: true},
+      });
+      const callStack = gig.callStack;
+      const gigOwner = gig.user;
+      // console.log(callStack ?? 'no callstack', gigOwner ?? 'no gigowner')
       const user = await User.findOne({ where: { id: userId } });
 
       //converts callStack to CallStack instance, with methods included
@@ -143,7 +150,7 @@ router.post(
         res.status(403).json({
           message: "You are not on call for this gig!",
         });
-        return
+        return;
       } else GigStack.setStackFilled(role);
       GigStack.checkFilled();
       GigStack.filled
@@ -167,9 +174,12 @@ router.post(
     const { userId, gigId, role } = req.params;
 
     try {
-      const gig = await Gig.findOne({ where: { id: gigId } });
-      const callStack = await CallStack.findOne({ where: { gigId } });
-      const gigOwner = await User.findOne({ where: { id: gig.ownerId } });
+      const gig = await Gig.findOne({
+        where: { id: gigId },
+        include: {all: true, nested: true},
+      });
+      const callStack = gig.callStack;
+      const gigOwner = gig.user;
       const user = await User.findOne({ where: { id: req.user.id } });
 
       //converts callStack to CallStack instance, with methods included
@@ -183,7 +193,7 @@ router.post(
         return;
       }
 
-      const nextUser = GigStack.returnNext(role);
+      const nextUser = await GigStack.returnNext(role);
       if (nextUser === "Empty stack!") {
         await newEmail(gigOwner.email, 301, gigId, user.email, { role });
       } else {
@@ -194,16 +204,6 @@ router.post(
         await newEmail(nextUser, 100, gigId, gigOwner.email, { role });
       }
 
-      const userAuth = parseInt(userId) === req.user.id;
-      // if (!userAuth) {
-      if (false) {
-        //use this for testing, in reality we want userAuth so only logged-in user can accept the gig
-        res
-          .status(400)
-          .json({ message: "You are not authorized to join this gig!" });
-        return;
-      }
-      //check if user is on call
       await CallStack.update(GigStack, { where: { gigId } });
       res.status(200).json({ updatedStack: GigStack });
     } catch (err) {
@@ -269,7 +269,7 @@ router.post(
     const { gigId, role } = req.params;
     const { calls } = req.body;
     try {
-      const gig = await Gig.findOne({ 
+      const gig = await Gig.findOne({
         where: { id: gigId, ownerId: req.user.id },
         include: { model: CallStack },
       });
@@ -308,10 +308,12 @@ router.post(
 
 router.get("/test/test", async (req, res) => {
   try {
-    const query = await User.findAndCountAll({include: {all: true, nested: true}})
+    const query = await User.findAndCountAll({
+      include: { all: true, nested: true },
+    });
     // await User.findOne({
-      // where: { gigId: 1 },
-      // include: [{ model: User }, { model: CallStack }],
+    // where: { gigId: 1 },
+    // include: [{ model: User }, { model: CallStack }],
     // });
     res.status(200).json(query);
   } catch (err) {
@@ -319,16 +321,17 @@ router.get("/test/test", async (req, res) => {
   }
 });
 
-
 router.get("/email/:gigId", validateSession, async (req, res) => {
   try {
     const { to, emailCode, sender, options } = req.body;
     const { gigId } = req.params;
     await newEmail(to, emailCode, gigId, sender, options);
-    res.status(200).json({ message: 'I did my part! Not sure if it worked lol' });
+    res
+      .status(200)
+      .json({ message: "I did my part! Not sure if it worked lol" });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: 'Something went wrong', err });
+    res.status(500).json({ message: "Something went wrong", err });
   }
 });
 
