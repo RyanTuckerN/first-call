@@ -1,5 +1,6 @@
 const express = require("express");
 const { User, Gig, CallStack } = require("../models");
+const { Op } = require("sequelize");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -73,15 +74,19 @@ router.put("/profile", validateSession, async (req, res) => {
   }
 });
 
-// router.get("/offers", validateSession, async (req, res) => {
-//   const { id } = req.user;
-//   try {
-//     const offers = await 
-
-//   } catch (err) {
-//     console.log(err);
-//     res.status(500).json(err);
-//   }
-// });
+router.get("/offers", validateSession, async (req, res) => {
+  const { id } = req.user;
+  try {
+    const user = await User.findOne({ where: { id } });
+    const offers = await Gig.findAndCountAll({
+      where: { openCalls: { [Op.contains]: [user.email] } },
+      include: {model: CallStack}
+    });
+    res.status(200).json(offers)
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+});
 
 module.exports = router;

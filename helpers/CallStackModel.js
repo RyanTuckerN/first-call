@@ -13,7 +13,6 @@ module.exports = class CallStackModel {
     this.filled = filled;
     this.stackTable = stackTable;
     this.gigId = gigId;
-  
   }
 
   /**
@@ -80,8 +79,22 @@ module.exports = class CallStackModel {
     }
 
     this.stackTable[role].onCall = next;
-    
+
     return next;
+  }
+
+  /**
+   * returns array containing the onCall email address for each role
+   * @returns {Array}
+   */
+  returnOpenCalls() {
+    return [
+      ...new Set(
+        this.returnRoles()
+          .map((role) => this.stackTable[role].onCall)
+          .filter((r) => r)
+      ),
+    ];
   }
 
   /**

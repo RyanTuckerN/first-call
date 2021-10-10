@@ -69,12 +69,12 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
      *** *** *** OR WILL MY CODE AWAIT THIS BLOCK OUTSIDE OF ITS SCOPE?* *** *** ***
      *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***/
     const sendEmails = async () => {
-    roles.forEach(async (role) => {
-      if (role === "bandLeader") return;
-      const { onCall } = callStack.stackTable[role];
-      // send a new email!
-      await newEmail(onCall, 100, gigId, gigOwner.email, { role });
-    });
+      roles.forEach(async (role) => {
+        if (role === "bandLeader") return;
+        const { onCall } = callStack.stackTable[role];
+        // send a new email!
+        await newEmail(onCall, 100, gigId, gigOwner.email, { role });
+      });
     };
     await sendEmails();
     /*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
@@ -82,6 +82,8 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
      *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***/
 
     console.log(callStack);
+    const GigStack = new CallStackModel(callStack);
+    await gig.update({ openCalls: GigStack.returnOpenCalls() });
     res.status(200).json({ message: "Success!", callStack });
   } catch (err) {
     if (err?.name === "SequelizeUniqueConstraintError") {
@@ -129,7 +131,7 @@ router.post(
     try {
       const gig = await Gig.findOne({
         where: { id: gigId },
-        include: {all: true, nested: true},
+        include: { all: true, nested: true },
       });
       const callStack = gig.callStack;
       const gigOwner = gig.user;
@@ -158,6 +160,7 @@ router.post(
         : await newEmail(gigOwner.email, 201, gigId, user.email, { role });
 
       await Gig.addUserToGig(userId, gigId);
+      await gig.update({ openCalls: GigStack.returnOpenCalls() });
       await CallStack.update(GigStack, { where: { gigId } });
       res.status(200).json({ updatedStack: GigStack });
     } catch (err) {
@@ -176,7 +179,7 @@ router.post(
     try {
       const gig = await Gig.findOne({
         where: { id: gigId },
-        include: {all: true, nested: true},
+        include: { all: true, nested: true },
       });
       const callStack = gig.callStack;
       const gigOwner = gig.user;
@@ -205,6 +208,7 @@ router.post(
       }
 
       await CallStack.update(GigStack, { where: { gigId } });
+      await gig.update({ openCalls: GigStack.returnOpenCalls() });
       res.status(200).json({ updatedStack: GigStack });
     } catch (err) {
       res.status(500).json({ err });
@@ -251,6 +255,7 @@ router.post(
       }
 
       await CallStack.update(GigStack, { where: { gigId } });
+      await gig.update({ openCalls: GigStack.returnOpenCalls() });
 
       res
         .status(200)
@@ -299,6 +304,7 @@ router.post(
       }
 
       await CallStack.update(GigStack, { where: { gigId } });
+      await gig.update({ openCalls: GigStack.returnOpenCalls() });
       res.status(200).json({ roleStack });
     } catch (err) {
       res.status(500).json({ err });

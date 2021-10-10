@@ -22,6 +22,7 @@ const Gig = sequelize.define("gig", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  openCalls: {type: DataTypes.ARRAY(DataTypes.STRING), defaultValue: []},
   optionalInfo: DataTypes.JSONB,
 });
 

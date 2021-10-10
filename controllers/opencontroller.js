@@ -38,14 +38,13 @@ router.post("/:gigId/addUser/:email/:role", async (req, res) => {
 
         // await Gig.addUserToGig(userId, gigId);
         await CallStack.update(GigStack, { where: { gigId } });
+        await gig.update({ openCalls: GigStack.returnOpenCalls() });
         res.status(200).json({ updatedStack: GigStack });
       } else {
-        res
-          .status(500)
-          .json({
-            message:
-              "Something went wrong! You sure you're on call for this gig?",
-          });
+        res.status(500).json({
+          message:
+            "Something went wrong! You sure you're on call for this gig?",
+        });
       }
     });
   } catch (err) {
@@ -87,14 +86,13 @@ router.post("/:gigId/decline/:email/:role", async (req, res) => {
           await newEmail(nextUser, 100, gigId, gigOwner.email, { role });
         }
         await CallStack.update(GigStack, { where: { gigId } });
+        await gig.update({ openCalls: GigStack.returnOpenCalls() });
         res.status(200).json({ updatedStack: GigStack });
       } else {
-        res
-          .status(500)
-          .json({
-            message:
-              "Something went wrong! You sure you're on call for this gig?",
-          });
+        res.status(500).json({
+          message:
+            "Something went wrong! You sure you're on call for this gig?",
+        });
       }
     });
   } catch (err) {
