@@ -23,33 +23,37 @@ router.post("/:gigId/addUser/:email/:role", async (req, res) => {
     const GigStack = new CallStackModel(callStack);
 
     const onCall = GigStack?.stackTable[role]?.onCall;
-    console.log(onCall)
+    console.log(onCall);
     // console.log(onCall);
-    bcrypt.compare(onCall, email.replace(/slash/g, "/"), async (err, success) => {
-      // console.log(err, success);
-      if (err) {
-        res.status(500).json({
-          err,
-        });
-      } else if (success) {
-        GigStack.setStackFilled(role);
-        GigStack.checkFilled()
-          ? await newEmail(gigOwner.email, 300, gigId, onCall, { role })
-          : await newEmail(gigOwner.email, 201, gigId, onCall, { role });
+    bcrypt.compare(
+      onCall,
+      email.replace(/slash/g, "/"),
+      async (err, success) => {
+        // console.log(err, success);
+        if (err) {
+          res.status(500).json({
+            err,
+          });
+        } else if (success) {
+          GigStack.setStackFilled(role);
+          GigStack.checkFilled()
+            ? await newEmail(gigOwner.email, 300, gigId, onCall, { role })
+            : await newEmail(gigOwner.email, 201, gigId, onCall, { role });
 
-        // await Gig.addUserToGig(userId, gigId);
-        await CallStack.update(GigStack, { where: { gigId } });
-        await gig.update({ openCalls: GigStack.returnOpenCalls() });
-        res.status(200).json({ updatedStack: GigStack });
-      } else {
-        res.status(500).json({
-          message:
-            "Something went wrong! You sure you're on call for this gig?",
-        });
+          // await Gig.addUserToGig(userId, gigId);
+          await CallStack.update(GigStack, { where: { gigId } });
+          await gig.update({ openCalls: GigStack.returnOpenCalls() });
+          res.status(200).json({ updatedStack: GigStack, message: "success!" });
+        } else {
+          res.status(500).json({
+            message:
+              "Something went wrong! You sure you're on call for this gig?",
+          });
+        }
       }
-    });
+    );
   } catch (err) {
-    res.status(500).json({ err });
+    res.status(500).json({ err, message: "failure!" });
   }
 });
 
@@ -70,37 +74,42 @@ router.post("/:gigId/decline/:email/:role", async (req, res) => {
     const GigStack = new CallStackModel(callStack);
     const onCall = GigStack?.stackTable[role]?.onCall;
 
-    bcrypt.compare(onCall, email.replace(/slash/g, "/"), async (err, success) => {
-      console.log(err, success);
-      if (err) {
-        console.log(err)
-        res.status(500).json({
-          err,
-        });
-      } else if (success) {
-        console.log(success)
-        const nextUser = GigStack.returnNext(role);
-        if (nextUser === "Empty stack!") {
-          await newEmail(gigOwner.email, 301, gigId, email, { role });
-        } else {
-          await newEmail(gigOwner.email, 200, gigId, email, {
-            role,
-            nextUser,
+    bcrypt.compare(
+      onCall,
+      email.replace(/slash/g, "/"),
+      async (err, success) => {
+        console.log(err, success);
+        if (err) {
+          console.log(err);
+          res.status(500).json({
+            err,
+            message: "failure",
           });
-          await newEmail(nextUser, 100, gigId, gigOwner.email, { role });
+        } else if (success) {
+          console.log(success);
+          const nextUser = GigStack.returnNext(role);
+          if (nextUser === "Empty stack!") {
+            await newEmail(gigOwner.email, 301, gigId, onCall, { role });
+          } else {
+            await newEmail(gigOwner.email, 200, gigId, onCall, {
+              role,
+              nextUser,
+            });
+            await newEmail(nextUser, 100, gigId, gigOwner.email, { role });
+          }
+          await CallStack.update(GigStack, { where: { gigId } });
+          await gig.update({ openCalls: GigStack.returnOpenCalls() });
+          res.status(200).json({ updatedStack: GigStack, message: "success" });
+        } else {
+          res.status(500).json({
+            message:
+              "Something went wrong! You sure you're on call for this gig?",
+          });
         }
-        await CallStack.update(GigStack, { where: { gigId } });
-        await gig.update({ openCalls: GigStack.returnOpenCalls() });
-        res.status(200).json({ updatedStack: GigStack });
-      } else {
-        res.status(500).json({
-          message:
-            "Something went wrong! You sure you're on call for this gig?",
-        });
       }
-    });
+    );
   } catch (err) {
-    res.status(500).json({ err });
+    res.status(500).json({ err, message: "failure" });
   }
 });
 

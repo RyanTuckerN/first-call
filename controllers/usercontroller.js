@@ -1,5 +1,5 @@
 const express = require("express");
-const { User, Gig, CallStack } = require("../models");
+const { User, Gig, CallStack, Notification } = require("../models");
 const { Op } = require("sequelize");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
@@ -33,6 +33,7 @@ router.post("/login", (req, res) => {
   const { email, password } = req.body;
   User.findOne({
     where: { email },
+    // attributes: { include: ["passwordhash"] },
   })
     .then((user) => {
       if (user) {
@@ -74,18 +75,32 @@ router.put("/profile", validateSession, async (req, res) => {
   }
 });
 
+//get count and list of gigs that have requesting user oncall
 router.get("/offers", validateSession, async (req, res) => {
   const { id } = req.user;
   try {
     const user = await User.findOne({ where: { id } });
     const offers = await Gig.findAndCountAll({
       where: { openCalls: { [Op.contains]: [user.email] } },
-      include: {model: CallStack}
+      include: { model: CallStack },
     });
-    res.status(200).json(offers)
+    res.status(200).json({ offers, message: "success!" });
   } catch (err) {
     console.log(err);
-    res.status(500).json(err);
+    res.status(500).json({ err, message: "failure" });
+  }
+});
+
+//get count and list of all notifications belonging to requesting user
+router.get("/notifications", validateSession, async (req, res) => {
+  const { id } = req.user;
+  try {
+    const notifications = await Notification.findAndCountAll({
+      where: { userId: id },
+    });
+    res.status(200).json({ message: "success", notifications });
+  } catch (err) {
+    console.log(err), res.status(500).json({ err, message: "failure" });
   }
 });
 

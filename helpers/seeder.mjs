@@ -1,6 +1,11 @@
 import fetch, { Headers } from "node-fetch";
 import { properize } from "./helpers.js";
+import bcrypt from "bcryptjs";
+const { hashSync } = bcrypt;
+const API_URL = 'http://localhost:3333'
+
 const tokens = [];
+const tokenHash = {};
 const userSeeder = async () => {
   try {
     for (let i = 1; i <= 5; i++) {
@@ -17,7 +22,7 @@ const userSeeder = async () => {
         password: "password",
         name: randomName,
       };
-      const userResults = await fetch(`http://localhost:3333/user/signup`, {
+      const userResults = await fetch(`${API_URL}/user/signup`, {
         method: "POST",
         mode: "cors",
         body: JSON.stringify(userBody),
@@ -31,6 +36,7 @@ const userSeeder = async () => {
       console.log(userJson);
       // const { id, email } = user;
       tokens.push({ id: user.id, sessionToken });
+      tokenHash[i] = sessionToken;
 
       for (let j = 0; j < 4; j++) {
         const randomNum = Math.round(Math.random() * 500);
@@ -49,7 +55,7 @@ const userSeeder = async () => {
           },
         };
 
-        const gigResults = await fetch(`http://localhost:3333/gig/`, {
+        const gigResults = await fetch(`${API_URL}/gig/`, {
           method: "POST",
           mode: "cors",
           body: JSON.stringify(gigBody),
@@ -80,7 +86,7 @@ const userSeeder = async () => {
           },
         };
         const callStackResults = await fetch(
-          `http://localhost:3333/gig/${gigId}/callStack`,
+          `${API_URL}/gig/${gigId}/callStack`,
           {
             method: "POST",
             mode: "cors",
@@ -99,8 +105,7 @@ const userSeeder = async () => {
   } catch (err) {
     console.log(err);
   } finally {
-    console.log('✔✔✔ users, gigs and callstacks created')
-     
+    console.log("✔✔✔ users, gigs and callstacks created");
   }
 };
 
@@ -1212,7 +1217,7 @@ const responsesSeeder = async () => {
     for (let i = 1; i < 5; i++) {
       for (let j = 0; j < tokens.length * 10; j++) {
         const sax = await fetch(
-          `http://localhost:3333/gig/${Math.round(
+          `${API_URL}/gig/${Math.round(
             Math.random() * 20
           )}/addUser/${tokens[i].id}/saxophone`,
           {
@@ -1225,7 +1230,7 @@ const responsesSeeder = async () => {
           }
         );
         const drums = await fetch(
-          `http://localhost:3333/gig/${Math.round(
+          `${API_URL}/gig/${Math.round(
             Math.random() * 20
           )}/addUser/${tokens[i].id}/drums`,
           {
@@ -1238,7 +1243,7 @@ const responsesSeeder = async () => {
           }
         );
         const accordian = await fetch(
-          `http://localhost:3333/gig/${Math.round(
+          `${API_URL}/gig/${Math.round(
             Math.random() * 20
           )}/addUser/${tokens[i].id}/accordian`,
           {
@@ -1251,7 +1256,7 @@ const responsesSeeder = async () => {
           }
         );
         const sax2 = await fetch(
-          `http://localhost:3333/gig/${Math.round(
+          `${API_URL}/gig/${Math.round(
             Math.random() * 20
           )}/decline/${tokens[i].id}/saxophone`,
           {
@@ -1264,7 +1269,7 @@ const responsesSeeder = async () => {
           }
         );
         const drums2 = await fetch(
-          `http://localhost:3333/gig/${Math.round(
+          `${API_URL}/gig/${Math.round(
             Math.random() * 20
           )}/decline/${tokens[i].id}/drums`,
           {
@@ -1277,7 +1282,7 @@ const responsesSeeder = async () => {
           }
         );
         const accordian2 = await fetch(
-          `http://localhost:3333/gig/${Math.round(
+          `${API_URL}/gig/${Math.round(
             Math.random() * 20
           )}/decline/${tokens[i].id}/accordian`,
           {
@@ -1306,4 +1311,276 @@ const responsesSeeder = async () => {
     console.log("✔✔✔ responsesSeeder complete");
   }
 };
-responsesSeeder();
+await responsesSeeder();
+
+const leaderSeeder = async () => {
+  try {
+    const body = {
+      email: "leader1@gmail.com",
+      password: "password",
+    };
+    const userResults = await fetch(`${API_URL}/user/signup`, {
+      method: "POST",
+      mode: "cors",
+      body: JSON.stringify(body),
+      headers: {
+        "Content-type": "application/json",
+      },
+    });
+    const userJson = await userResults.json();
+    const { sessionToken, user } = userJson;
+
+    const profile = await fetch(`${API_URL}/user/profile`, {
+      method: "PUT",
+      mode: "cors",
+      body: JSON.stringify({
+        name: "Nick Tucker",
+        role: "Bass",
+        description:
+          "Playing bass since age 15, Nick is top call bassist in Indinapolis's music scene!",
+        location: "Indianapolis, IN",
+        paymentPreference: {
+          zelle: "3175138076",
+          venmo: "nick-tucker-12",
+          cashApp: "$nicktuckerbass",
+        },
+        specialties: ["Jazz", "Hip-hop", "Top 40"],
+      }),
+      headers: {
+        "Content-type": "application/json",
+        Authorization: sessionToken,
+      },
+    });
+
+    const profileJson = await profile.json()
+    // console.log(userJson);
+    const gigBody = {
+      description: "Recital",
+      date: "2022-03-22 18:30:00.543-04",
+      payment: 400,
+      location: "Carnegie Hall",
+      optionalInfo: {
+        attire: "Formal",
+        meal: "Surf and turf",
+        rehearsal: "day-of",
+      },
+    };
+    const stackBody = {
+      stackTable: {
+        saxophone: [
+          "user3@email.com",
+          "sax1@gmail.com",
+          "sax1@gmail.com",
+          "sax1@gmail.com",
+          "sax2@gmail.com",
+        ],
+        drums: [
+          "user1@email.com",
+          "user2@email.com",
+          "drums1@gmail.com",
+          "drums1@gmail.com",
+          "drums1@gmail.com",
+          "drums1@gmail.com",
+          "drums2@gmail.com",
+        ],
+        accordian: ["yourOwnAccordian@email.me"],
+      },
+    };
+
+    const gigResults = await fetch(`${API_URL}/gig/`, {
+      method: "POST",
+      mode: "cors",
+      body: JSON.stringify(gigBody),
+      headers: {
+        "Content-type": "application/json",
+        Authorization: sessionToken,
+      },
+    });
+    const gigJson = await gigResults.json();
+    // console.log(gigJson.newGig);
+
+    const gigId = gigJson.newGig.id;
+
+    const callStackResults = await fetch(
+      `${API_URL}/gig/${gigId}/callStack`,
+      {
+        method: "POST",
+        mode: "cors",
+        body: JSON.stringify(stackBody),
+        headers: {
+          "Content-type": "application/json",
+          Authorization: sessionToken,
+        },
+      }
+    );
+    const stackJson = await callStackResults.json();
+    const addRoleFetch = await fetch(
+      `${API_URL}/gig/${gigId}/callStack/addRole/harmonica`,
+      {
+        method: "POST",
+        mode: "cors",
+        body: JSON.stringify({
+          calls: ["johs1d6@email.com", "kipp0@boob.gov"],
+        }),
+        headers: {
+          "Content-type": "application/json",
+          Authorization: sessionToken,
+        },
+      }
+    );
+
+    const addRoleJson = await addRoleFetch.json();
+
+    const addUserFetch = await fetch(
+      `
+  ${API_URL}/gig/${gigId}/callStack/addUser/harmonica/daddy-O@email.com
+  `,
+      {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: sessionToken,
+        },
+      }
+    );
+    const addUserJson = await addUserFetch.json();
+
+    const openAcceptAccordian = await fetch(
+      `
+  ${API_URL}/open/${gigId}/addUser/${hashSync(
+        "yourOwnAccordian@email.me",
+        10
+      ).replace(/\//g, "slash")}/accordian
+  `,
+      {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-type": "application/json",
+        },
+      }
+    );
+    const accAccJson = await openAcceptAccordian.json();
+
+    const openDeclineHarmonica = await fetch(
+      `
+  ${API_URL}/open/${gigId}/decline/${hashSync(
+        "johs1d6@email.com",
+        10
+      ).replace(/\//g, "slash")}/harmonica
+  `,
+      {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-type": "application/json",
+        },
+      }
+    );
+    const decHarmJson = await openDeclineHarmonica.json();
+
+    const openAcceptHarmonica = await fetch(
+      `
+  ${API_URL}/open/${gigId}/addUser/${hashSync(
+        "kipp0@boob.gov",
+        10
+      ).replace(/\//g, "slash")}/harmonica
+  `,
+      {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-type": "application/json",
+        },
+      }
+    );
+
+    const accHarmJson = await openAcceptHarmonica.json();
+
+    const acceptSax = await fetch(
+      `${API_URL}/gig/${gigId}/addUser/3/saxophone`,
+      {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: tokenHash["3"],
+        },
+      }
+    );
+
+    const accSaxJson = await acceptSax.json();
+
+    const declineDrums = await fetch(
+      `
+  ${API_URL}/gig/${gigId}/decline/1/drums
+  `,
+      {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: tokenHash["1"],
+        },
+      }
+    );
+    const decDrumJson = await declineDrums.json();
+
+    const acceptDrums = await fetch(
+      `${API_URL}/gig/${gigId}/addUser/2/drums`,
+      {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: tokenHash["2"],
+        },
+      }
+    );
+
+    const accDrumJson = await acceptDrums.json();
+
+    const gigInfo = await fetch(`${API_URL}/gig/${gigId}`,{
+      method: "GET",
+        mode: "cors",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: sessionToken
+        },
+    })
+    const gigInfoJson = await gigInfo.json()
+
+    const user2offers = await fetch(`${API_URL}/user/offers`, {
+      method: "GET",
+        mode: "cors",
+        headers: {
+          "Content-type": "application/json",
+          Authorization: tokenHash["2"],
+        },
+    })
+    const offersJson = await user2offers.json()
+
+    console.log("create user status: ", userJson.message);
+    console.log("update profile status: ", profileJson.message);
+    console.log("create callstack status: ", stackJson.message);
+    console.log("add role status: ", addRoleJson.message);
+    console.log("add user to callstack status: ", addUserJson.message);
+    console.log("accAccJson status: ", accAccJson.message);
+    console.log("accDrumJson status: ", accDrumJson.message);
+    console.log("decDrumJson status: ", decDrumJson.message);
+    console.log("accSaxJson status: ", accSaxJson.message);
+    console.log("accHarmJson status: ", accHarmJson.message);
+    console.log("decHarmJson status: ", decHarmJson.message);
+    console.log("gig info status: ", gigInfoJson.message)
+    console.log("offers endpoint status: ", offersJson.offers.rows)
+
+  } catch (err) {
+    console.log(err);
+  } finally {
+    console.log("✔✔✔ leader seeder finished");
+  }
+};
+
+
+await leaderSeeder();

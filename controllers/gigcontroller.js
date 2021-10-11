@@ -17,9 +17,9 @@ router.post("/", validateSession, async (req, res) => {
       location,
       optionalInfo,
     });
-    res.status(200).json({ newGig });
+    res.status(200).json({ newGig, message: 'success' });
   } catch (err) {
-    res.status(500).json({ err });
+    res.status(500).json({ err, message: 'failure' });
   }
 });
 
@@ -92,7 +92,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
         .json({ message: `Callstack already exists for gig ${gigId}.` });
       return;
     }
-    res.status(500).json(err);
+    res.status(500).json({err, message: 'failure'});
     console.error(err);
   }
 });
@@ -112,12 +112,12 @@ router.get("/:gigId", validateSession, async (req, res) => {
         res.status(403).json({ message: "⛔ You don't have access ⛔" });
         return;
       }
-      res.status(200).json(query);
+      res.status(200).json({query, message: 'success'});
     } else {
       res.status(404).json({ message: "Gig not found" });
     }
   } catch (err) {
-    res.status(500).json({ err });
+    res.status(500).json({ err, message: 'failure' });
   }
 });
 
@@ -162,9 +162,9 @@ router.post(
       await Gig.addUserToGig(userId, gigId);
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
       await CallStack.update(GigStack, { where: { gigId } });
-      res.status(200).json({ updatedStack: GigStack });
+      res.status(200).json({ updatedStack: GigStack, message: 'success' });
     } catch (err) {
-      res.status(500).json({ err });
+      res.status(500).json({ err, message: 'failure' });
     }
   }
 );
@@ -209,9 +209,9 @@ router.post(
 
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
-      res.status(200).json({ updatedStack: GigStack });
+      res.status(200).json({ updatedStack: GigStack, message: 'success' });
     } catch (err) {
-      res.status(500).json({ err });
+      res.status(500).json({ err, message: 'failure' });
     }
   }
 );
@@ -259,7 +259,7 @@ router.post(
 
       res
         .status(200)
-        .json({ message: `getting there!`, updatedCallStack: GigStack });
+        .json({ message: `success`, updatedCallStack: GigStack });
     } catch (err) {
       res.status(500).json({ message: `Something has gone wrong!` });
     }
@@ -309,9 +309,9 @@ router.post(
       GigStack.setGigNotFilled()
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
-      res.status(200).json({ roleStack });
+      res.status(200).json({ roleStack, message: 'success' });
     } catch (err) {
-      res.status(500).json({ err });
+      res.status(500).json({ err, message: 'failure' });
     }
   }
 );
@@ -325,9 +325,9 @@ router.get("/test/test", async (req, res) => {
     // where: { gigId: 1 },
     // include: [{ model: User }, { model: CallStack }],
     // });
-    res.status(200).json(query);
+    res.status(200).json({query, message: 'success'});
   } catch (err) {
-    res.status(500).json(err);
+    res.status(500).json({err, message: 'failure'});
   }
 });
 
