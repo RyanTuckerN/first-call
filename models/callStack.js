@@ -1,6 +1,6 @@
 const { DataTypes, where, Op } = require("sequelize");
 const sequelize = require("../db");
-const CallStackModel = require("../helpers/CallStackModel");
+const CallStackModel = require("./CallStackModel");
 
 const CallStack = sequelize.define("callStack", {
   gigId: {
@@ -31,6 +31,7 @@ CallStack.newStackTable = async (table, gigId) => {
   const constructorObj = {stackTable, gigId, filled: false, }
 
   const GigStack = new CallStackModel(constructorObj)
+  GigStack.filterStacks()
   GigStack.setFirstCalls()
 
   // console.log('GigStack in callStack.js: ', GigStack);

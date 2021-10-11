@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { Gig, User, CallStack } = require("../models");
-const CallStackModel = require("../helpers/CallStackModel");
+const CallStackModel = require("../models/CallStackModel");
 const newEmail = require("../helpers/newEmail");
 const validateSession = require("../middleware/validateSession");
 
@@ -26,6 +26,7 @@ router.post("/", validateSession, async (req, res) => {
 //CREATE A CALLSTACK OBJ FOR YOUR GIG.
 //CALLSTACK REQUEST SHOULD BE JSON OBJ 'stackTable' WITH A KEY REPRESENTING EACH INTSTRUMENT
 //EACH KEY HAS VALUE OF ARRAY OF EMAIL ADDRESSES, IN ORDER OF CALL (1ST, 2ND, 3RD ETC)
+//PREVENT USERS FROM SUBMITTING DUPLICATES TO CALLSTACKS ON THE FRONT END
 router.post("/:gigId/callStack", validateSession, async (req, res) => {
   const { stackTable } = req.body;
   const { gigId } = req.params;
@@ -34,6 +35,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
       Object.keys(stackTable),
       Object.values(stackTable),
     ];
+    
     if (
       //if no roles are defined in request
       roles.length === 0 ||
@@ -41,8 +43,8 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
       !stacks.every((stack) => Array.isArray(stack))
     ) {
       throw {
-        message: "improperly formed stackTable",
-        error: new Error("improperly formed stackTable"),
+        message: "improper stackTable",
+        error: new Error("improper stackTable"),
       };
     }
     const gig = await Gig.findOne({ where: { id: gigId } });
@@ -62,7 +64,6 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     }
     await Gig.addUserToGig(gig.ownerId, gig.id);
 
-    console.log(callStack);
 
     /*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
      *** *** *** *** *** *** DO I NEED TO DO THIS LIKE THIS? *** *** *** *** *** ***
@@ -81,7 +82,6 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
      *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
      *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***/
 
-    console.log(callStack);
     const GigStack = new CallStackModel(callStack);
     await gig.update({ openCalls: GigStack.returnOpenCalls() });
     res.status(200).json({ message: "Success!", callStack });
@@ -290,6 +290,10 @@ router.post(
         return;
       }
       const GigStack = new CallStackModel(gig.callStack);
+      if(GigStack.returnRoles().includes(role)){
+        res.status(400).json({message: `${role} already exists`})
+        return
+      }
 
       const roleStack = GigStack.addRoleToStackTable(role, calls);
       const firstCall =
@@ -302,7 +306,7 @@ router.post(
       if (roleStack.onCall === firstCall && firstCall !== null) {
         await newEmail(roleStack.onCall, 100, gigId, gigOwner.email, { role });
       }
-
+      GigStack.setGigNotFilled()
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
       res.status(200).json({ roleStack });

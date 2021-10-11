@@ -1,6 +1,6 @@
 const { CLIENT_URL, EMAIL_PASSWORD, EMAIL_USER } = process.env;
 const { User, Gig, CallStack, Notification } = require("../models");
-const { properize, returnTime, addHours } = require("../helpers/helpers");
+const { properize, returnTime, addHours } = require("./helpers");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs");
 
@@ -150,10 +150,9 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
     if (emailCode === 100) {
       const anchorUrl = options?.receiverExists
         ? `<a href='www.fistcallclient.com/acceptGig'>Click here to accept the offer</a>`
-        : `<a href='www.fistcallclient.com/open/acceptGig/?email=${bcrypt.hashSync(
-            options.to,
-            10
-          )}&gigId=${gig.id}&role=${
+        : `<a href='www.fistcallclient.com/open/acceptGig/?email=${bcrypt
+            .hashSync(options.to, 10)
+            .replace(/\//g, "slash")}&gigId=${gig.id}&role=${
             options.role
           }'>Click here to accept the offer</a>`;
 

@@ -25,6 +25,11 @@ module.exports = class CallStackModel {
     return this.filled;
   }
 
+  setGigNotFilled() {
+    this.filled = false;
+    return this.filled;
+  }
+
   /**
    * sets first call in each stack to 'oncall'.
    * should only be called once when the callstack is instantiated
@@ -193,6 +198,17 @@ module.exports = class CallStackModel {
     }
     this.returnNext(role);
     return this.stackTable[role];
+  }
+
+  /**
+   * remove duplicates and filter falsy values from each callstack 
+   */
+  filterStacks() {
+    this.returnRoles().forEach((role) => {
+      this.stackTable[role].calls = [
+        ...new Set(this.stackTable[role].calls)
+      ].filter((r) => r);
+    });
   }
 
   /**

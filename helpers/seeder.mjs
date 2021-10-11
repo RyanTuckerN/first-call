@@ -1,19 +1,21 @@
 import fetch, { Headers } from "node-fetch";
 import { properize } from "./helpers.js";
-const tokens = []
+const tokens = [];
 const userSeeder = async () => {
   try {
     for (let i = 1; i <= 5; i++) {
-
-      const randomUser = await fetch(`https://randomuser.me/api/`)
-      const randomJson = await randomUser.json()
-      const randomName = randomJson.results[0].name.first + " " + randomJson.results[0].name.last 
-      console.log(randomJson)
+      const randomUser = await fetch(`https://randomuser.me/api/`);
+      const randomJson = await randomUser.json();
+      const randomName =
+        randomJson.results[0].name.first +
+        " " +
+        randomJson.results[0].name.last;
+      // console.log(randomJson);
 
       const userBody = {
         email: `user${i}@email.com`,
         password: "password",
-        name: randomName
+        name: randomName,
       };
       const userResults = await fetch(`http://localhost:3333/user/signup`, {
         method: "POST",
@@ -26,9 +28,9 @@ const userSeeder = async () => {
       const userJson = await userResults.json();
       // console.log(userJson);
       const { sessionToken, user } = userJson;
-      console.log(userJson)
+      console.log(userJson);
       // const { id, email } = user;
-      tokens.push({id: user.id, sessionToken})
+      tokens.push({ id: user.id, sessionToken });
 
       for (let j = 0; j < 4; j++) {
         const randomNum = Math.round(Math.random() * 500);
@@ -37,7 +39,9 @@ const userSeeder = async () => {
           description: `${properize(adjectives[randomNum * 2])} concert`,
           date: "2021-12-24 18:30:00.543-04",
           payment: randomNum - (randomNum % 25) + 50,
-          location: `${randomNum + 1200} ${properize(adjectives[randomNum])} Street`,
+          location: `${randomNum + 1200} ${properize(
+            adjectives[randomNum]
+          )} Street`,
           optionalInfo: {
             attire: "Business casual",
             meal: "Box lunch",
@@ -89,14 +93,16 @@ const userSeeder = async () => {
         );
         const stackJson = await callStackResults.json();
         // console.log(stackJson);
-        console.log(i, j)
+        console.log(i, j);
       }
     }
   } catch (err) {
     console.log(err);
+  } finally {
+    console.log('✔✔✔ users, gigs and callstacks created')
+     
   }
 };
-
 
 const adjectives = [
   "aback",
@@ -1200,61 +1206,104 @@ const adjectives = [
 
 await userSeeder();
 
-console.log(tokens)
-const responsesSeeder = async() => {
-  for(let i = 1; i < 5; i++){
-    for(let j = 0; j < tokens.length*10; j++){
-      const sax = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/addUser/${tokens[i].id}/saxophone`, {
-          method: "POST",
-          mode: "cors",
-          headers: {
-            "Content-type": "application/json",
-            Authorization: tokens[i].sessionToken,
-          },
-      })
-      const drums = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/addUser/${tokens[i].id}/drums`, {
-          method: "POST",
-          mode: "cors",
-          headers: {
-            "Content-type": "application/json",
-            Authorization: tokens[i].sessionToken,
-          },
-      })
-      const accordian = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/addUser/${tokens[i].id}/accordian`, {
-        method: "POST",
-        mode: "cors",
-        headers: {
-          "Content-type": "application/json",
-          Authorization: tokens[i].sessionToken,
-        },
-      })
-      const sax2 = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/decline/${tokens[i].id}/saxophone`, {
-          method: "POST",
-          mode: "cors",
-          headers: {
-            "Content-type": "application/json",
-            Authorization: tokens[i].sessionToken,
-          },
-      })
-      const drums2 = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/decline/${tokens[i].id}/drums`, {
-          method: "POST",
-          mode: "cors",
-          headers: {
-            "Content-type": "application/json",
-            Authorization: tokens[i].sessionToken,
-          },
-      })
-      const accordian2 = await fetch(`http://localhost:3333/gig/${Math.round(Math.random()*20)}/decline/${tokens[i].id}/accordian`, {
-        method: "POST",
-        mode: "cors",
-        headers: {
-          "Content-type": "application/json",
-          Authorization: tokens[i].sessionToken,
-        },
-      })
-      const jsons = await Promise.all([accordian.json(), sax.json(), drums.json(),accordian2.json(), sax2.json(), drums2.json(), ])
-      console.log(i, j)
-    }}
-  
-}
-responsesSeeder()
+console.log(tokens);
+const responsesSeeder = async () => {
+  try {
+    for (let i = 1; i < 5; i++) {
+      for (let j = 0; j < tokens.length * 10; j++) {
+        const sax = await fetch(
+          `http://localhost:3333/gig/${Math.round(
+            Math.random() * 20
+          )}/addUser/${tokens[i].id}/saxophone`,
+          {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: tokens[i].sessionToken,
+            },
+          }
+        );
+        const drums = await fetch(
+          `http://localhost:3333/gig/${Math.round(
+            Math.random() * 20
+          )}/addUser/${tokens[i].id}/drums`,
+          {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: tokens[i].sessionToken,
+            },
+          }
+        );
+        const accordian = await fetch(
+          `http://localhost:3333/gig/${Math.round(
+            Math.random() * 20
+          )}/addUser/${tokens[i].id}/accordian`,
+          {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: tokens[i].sessionToken,
+            },
+          }
+        );
+        const sax2 = await fetch(
+          `http://localhost:3333/gig/${Math.round(
+            Math.random() * 20
+          )}/decline/${tokens[i].id}/saxophone`,
+          {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: tokens[i].sessionToken,
+            },
+          }
+        );
+        const drums2 = await fetch(
+          `http://localhost:3333/gig/${Math.round(
+            Math.random() * 20
+          )}/decline/${tokens[i].id}/drums`,
+          {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: tokens[i].sessionToken,
+            },
+          }
+        );
+        const accordian2 = await fetch(
+          `http://localhost:3333/gig/${Math.round(
+            Math.random() * 20
+          )}/decline/${tokens[i].id}/accordian`,
+          {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-type": "application/json",
+              Authorization: tokens[i].sessionToken,
+            },
+          }
+        );
+        const jsons = await Promise.all([
+          accordian.json(),
+          sax.json(),
+          drums.json(),
+          accordian2.json(),
+          sax2.json(),
+          drums2.json(),
+        ]);
+        console.log(i, j);
+      }
+    }
+  } catch (err) {
+    console.log(err);
+  } finally {
+    console.log("✔✔✔ responsesSeeder complete");
+  }
+};
+responsesSeeder();

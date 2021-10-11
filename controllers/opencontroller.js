@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { Gig, User, CallStack } = require("../models");
-const CallStackModel = require("../helpers/CallStackModel");
+const CallStackModel = require("../models/CallStackModel");
 const newEmail = require("../helpers/newEmail");
 // use bcrypt to hash email address?? too much??
 const bcrypt = require("bcryptjs");
@@ -23,8 +23,9 @@ router.post("/:gigId/addUser/:email/:role", async (req, res) => {
     const GigStack = new CallStackModel(callStack);
 
     const onCall = GigStack?.stackTable[role]?.onCall;
+    console.log(onCall)
     // console.log(onCall);
-    bcrypt.compare(onCall, email, async (err, success) => {
+    bcrypt.compare(onCall, email.replace(/slash/g, "/"), async (err, success) => {
       // console.log(err, success);
       if (err) {
         res.status(500).json({
@@ -67,14 +68,17 @@ router.post("/:gigId/decline/:email/:role", async (req, res) => {
       throw new Error("something is wrong with the query");
 
     const GigStack = new CallStackModel(callStack);
+    const onCall = GigStack?.stackTable[role]?.onCall;
 
-    bcrypt.compare(onCall, email, async (err, success) => {
+    bcrypt.compare(onCall, email.replace(/slash/g, "/"), async (err, success) => {
       console.log(err, success);
       if (err) {
+        console.log(err)
         res.status(500).json({
           err,
         });
       } else if (success) {
+        console.log(success)
         const nextUser = GigStack.returnNext(role);
         if (nextUser === "Empty stack!") {
           await newEmail(gigOwner.email, 301, gigId, email, { role });
