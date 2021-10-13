@@ -65,7 +65,7 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
       ? await Notification.create({
           text: subject,
           userId: receiver.id,
-          details: { ...details, ...options },
+          details: { ...details, ...options, code: emailCode },
         })
       : `${to} doesn't have an account yet.`;
 
@@ -85,6 +85,8 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
     );
     return mailOptions;
 
+    //   ADD LOGIC THAT WILL LOOK AT RECEIVER'S SETTINGS
+    //   AND PREVENT EMAILS IF THEY HAVE DISABLED THEM
     //UNCOMMENT THE FOLLOWING TO ACTUALLY SEND EMAILS!!!
     // transporter.sendMail(mailOptions, (err, info) => {
     //   if (err) {
@@ -119,10 +121,8 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
   try {
     //will be undefined if user doesn't have an account
     const sender = await User.findOne({ where: { email: senderEmail } });
-    // console.log('sender in newEmail.js', sender?.dataValues)
-    // console.log("📦 📦 📦 gig object in emailController: ", gig.callStack);
 
-    console.log("🚒🚒🚒USER EXISTS??? :", options.receiverExists);
+    console.log("USER EXISTS? :", options.receiverExists);
 
     const details = {
       sender: sender?.name ?? senderEmail,
@@ -141,19 +141,21 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       if (!infoTopics.length) return;
       let htmlOutput = "";
       infoTopics.forEach((topic) => {
-        htmlOutput += `<dt><strong>${properize(topic)}:</strong></dt><dd>${
-          info[topic]
-        }</dd>`;
+        htmlOutput += `
+        <dt>
+          <strong>${properize(topic)}:</strong>
+        </dt>
+        <dd>${info[topic]}</dd>`;
       });
       return htmlOutput;
     };
 
     if (emailCode === 100) {
       const anchorUrl = options?.receiverExists
-      //either give them a link to sign in
-        ? `<a href='www.fistcallclient.com/acceptGig'>Click here to accept the offer</a>`
-      //or embed the info in url to be parsed on the front end and run a post fetch to accept or decline
-        : `<a href='www.fistcallclient.com/open/acceptGig/?email=${bcrypt
+        ? //either give them a link to sign in
+          `<a href='www.fistcallclient.com/acceptGig'>Click here to accept the offer</a>`
+        : //or embed the info in url to be parsed on the front end and run a post fetch to accept or decline
+          `<a href='www.fistcallclient.com/acceptGig/?email=${bcrypt
             .hashSync(options.to, 10)
             .replace(/\//g, "slash")}&gigId=${gig.id}&role=${
             options.role
