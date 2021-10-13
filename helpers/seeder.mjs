@@ -1,4 +1,4 @@
-import fetch, { Headers } from "node-fetch";
+import fetch from "node-fetch";
 import { properize } from "./helpers.js";
 import bcrypt from "bcryptjs";
 const { hashSync } = bcrypt;
@@ -1337,7 +1337,8 @@ const leaderSeeder = async () => {
         name: "Nick Tucker",
         role: "Bass",
         description:
-          "Playing bass since age 15, Nick is top call bassist in Indinapolis's music scene!",
+          `Playing bass since age 15, Nick is top 
+          call bassist in Indinapolis's music scene!`,
         location: "Indianapolis, IN",
         paymentPreference: {
           zelle: "3175138076",

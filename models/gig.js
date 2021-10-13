@@ -1,4 +1,4 @@
-const { DataTypes } = require("sequelize");
+const { DataTypes, UUIDV4 } = require("sequelize");
 const sequelize = require("../db");
 
 const Gig = sequelize.define("gig", {
@@ -22,6 +22,7 @@ const Gig = sequelize.define("gig", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  token: {type: DataTypes.UUID, allowNull: false},
   openCalls: {type: DataTypes.ARRAY(DataTypes.STRING), defaultValue: []},
   optionalInfo: DataTypes.JSONB,
 });

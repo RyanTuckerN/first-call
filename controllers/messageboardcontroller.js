@@ -1,5 +1,5 @@
 const express = require("express");
-const { Post } = require("../models");
+const { Post, Gig } = require("../models");
 const router = express.Router();
 const validateSession = require("../middleware/validateSession");
 
@@ -112,7 +112,7 @@ router.post("/:gigId/post/:postId/removeUpvote", async (req, res) => {
 });
 
 //edit text of post
-router.post("/:gigId/post/:postId/edit", async (req, res) => {
+router.put("/:gigId/post/:postId/edit", async (req, res) => {
   const { gigId, postId } = req.params;
   const { text } = req.body;
   // const userId = req.user.id
@@ -219,12 +219,29 @@ router.post("/:gigId/post/:postId/delete", async (req, res) => {
 //get all posts by gigId
 router.get("/:gigId", async (req, res) => {
   const { gigId } = req.params;
-  const posts = await Post.findAndCountAll({ where: { gigId } });
-  if (!posts.count) {
+  // const { id } = req.user
+  const id = 3;
+
+  const gig = await Gig.findOne({
+    where: { id: gigId },
+    include: { model: Post },
+  });
+  const users = await gig.getUsers();
+
+  //if user is not on the gig
+  if (!users.map((u) => u.id).includes(id)) {
+    res.status(403).json({ message: "not authorized!" });
+    return;
+  }
+
+  if (!gig.posts.length) {
     res.status(404).json({ message: "no posts!" });
     return;
   }
-  res.status(200).json({ count: posts.count, posts: posts.rows });
+  // res.status(200).json({ count: posts.count, posts: posts.rows });
+  res
+    .status(200)
+    .json({ posts: gig.posts, count: gig.posts.length, message: "success" });
 });
 
 module.exports = router;

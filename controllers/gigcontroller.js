@@ -4,10 +4,12 @@ const { Gig, User, CallStack } = require("../models");
 const CallStackModel = require("../models/CallStackModel");
 const newEmail = require("../helpers/newEmail");
 const validateSession = require("../middleware/validateSession");
+const {v4: uuidv4}= require('uuid')
 
 //CREATE A GIG
 router.post("/", validateSession, async (req, res) => {
   const { description, date, payment, location, optionalInfo } = req.body;
+  const token = uuidv4()
   try {
     const newGig = await Gig.create({
       ownerId: req.user.id,
@@ -16,6 +18,7 @@ router.post("/", validateSession, async (req, res) => {
       payment,
       location,
       optionalInfo,
+      token
     });
     res.status(200).json({ newGig, message: 'success' });
   } catch (err) {
@@ -141,8 +144,8 @@ router.post(
       //converts callStack to CallStack instance, with methods included
       const GigStack = new CallStackModel(callStack);
       const userAuth = parseInt(userId) === req.user.id;
-      // if (!userAuth) {
-      if (false) {
+      if (!userAuth) {
+      // if (false) {
         //use this for testing, in reality we want userAuth so only logged-in user can accept the gig
         res
           .status(400)

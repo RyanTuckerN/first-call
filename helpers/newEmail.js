@@ -159,7 +159,7 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
             .hashSync(options.to, 10)
             .replace(/\//g, "slash")}&gigId=${gig.id}&role=${
             options.role
-          }'>Click here to accept the offer</a>`;
+          }&token=${gig.token}'>Click here to accept the offer</a>`;
 
       /************************************************************
      //gig invite

@@ -1,6 +1,5 @@
 const { DataTypes, where, Op, Model } = require("sequelize");
 const sequelize = require("../db");
-// const CallStackModel = require("../helpers/CallStackModel");
 
 class Post extends Model {
   /**
