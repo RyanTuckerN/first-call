@@ -331,6 +331,30 @@ router.get("/test/test", async (req, res) => {
   }
 });
 
+//get array of users associated with gig, bandleader is always position 0
+router.get("/:gigId/users", validateSession, async (req, res) => {
+  const { gigId } = req.params;
+  try {
+    const query = await Gig.getGigInfo(gigId);
+    if (query) {
+      const authorizedUsers = [
+        query.bandLeader.id,
+        ...query.bandMembers.map((user) => user.id),
+      ];
+      if (!authorizedUsers.includes(req.user.id)) {
+        res.status(403).json({ message: "⛔ You don't have access ⛔" });
+        return;
+      }
+      const users = [query.bandLeader, ...query.bandMembers]
+      res.status(200).json({users, message: 'success'});
+    } else {
+      res.status(404).json({ message: "Gig not found" });
+    }
+  } catch (err) {
+    res.status(500).json({ err, message: 'failure' });
+  }
+});
+
 router.get("/email/:gigId", validateSession, async (req, res) => {
   try {
     const { to, emailCode, sender, options } = req.body;
