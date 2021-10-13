@@ -15,6 +15,7 @@ router.post("/:gigId/newPost/:childOf?", async (req, res) => {
 
     // const userId = req.user.id
     const userId = 3;
+
     const parentPost = childOf
       ? await Post.findOne({ where: { id: childOf } })
       : null;
@@ -48,7 +49,7 @@ router.post("/:gigId/post/:postId/upvote", async (req, res) => {
         .status(403)
         .json({ message: `You must have gotten here on accident!` });
       console.log(
-        `🔥🔥🔥 Post does not exist at upvote a post, messageboardcontroller.js`
+        `🔥 Post does not exist at upvote a post, messageboardcontroller.js`
       );
       return;
     }
@@ -86,7 +87,7 @@ router.post("/:gigId/post/:postId/removeUpvote", async (req, res) => {
         .status(403)
         .json({ message: `You must have gotten here on accident!` });
       console.log(
-        `🔥🔥🔥 Post does not exist at remove upvote, messageboardcontroller.js`
+        `🔥 Post does not exist at remove upvote, messageboardcontroller.js`
       );
       return;
     }
@@ -126,7 +127,7 @@ router.post("/:gigId/post/:postId/edit", async (req, res) => {
         .status(403)
         .json({ message: `You must have gotten here on accident!` });
       console.log(
-        `🔥🔥🔥 Post does not exist at edit text of post, messageboardcontroller.js`
+        `🔥 Post does not exist at edit text of post, messageboardcontroller.js`
       );
       return;
     }
@@ -180,7 +181,7 @@ router.post("/:gigId/post/:postId/delete", async (req, res) => {
         .status(403)
         .json({ message: `You must have gotten here on accident!` });
       console.log(
-        `🔥🔥🔥 Post does not exist at "delete" post, messageboardcontroller.js`
+        `🔥 Post does not exist at "delete" post, messageboardcontroller.js`
       );
       return;
     } else if (post.details.deleted) {

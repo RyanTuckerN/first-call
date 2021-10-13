@@ -49,8 +49,9 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
       // debug: true
     });
 
-    options.to = to;
+    //add properties to options object
     options.receiverExists = receiver ? true : false;
+    options.to = to;
 
     const { subject, html, details } = await emailController(
       gig,
@@ -149,7 +150,9 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
 
     if (emailCode === 100) {
       const anchorUrl = options?.receiverExists
+      //either give them a link to sign in
         ? `<a href='www.fistcallclient.com/acceptGig'>Click here to accept the offer</a>`
+      //or embed the info in url to be parsed on the front end and run a post fetch to accept or decline
         : `<a href='www.fistcallclient.com/open/acceptGig/?email=${bcrypt
             .hashSync(options.to, 10)
             .replace(/\//g, "slash")}&gigId=${gig.id}&role=${
