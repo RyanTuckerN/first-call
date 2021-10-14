@@ -12,6 +12,7 @@ const User = sequelize.define(
     passwordhash: {
       type: DataTypes.STRING,
       allowNull: false,
+      
     },
     role: DataTypes.STRING,
     name: DataTypes.STRING,
@@ -24,6 +25,7 @@ const User = sequelize.define(
   //   defaultScope: {
   //     attributes: { exclude: ["passwordhash"] },
   //   },
+  
   // }
 );
 

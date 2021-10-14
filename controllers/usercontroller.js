@@ -19,8 +19,12 @@ router.post("/signup", (req, res) => {
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
         expiresIn: 86400,
       });
+
       res.status(200).json({
-        user,
+        user: {
+          id: user.id,
+          email,          
+        },
         message: `Success! Account created for ${email}!`,
         sessionToken: token,
       });
@@ -42,9 +46,20 @@ router.post("/login", (req, res) => {
             const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
               expiresIn: 86400,
             });
+
             res.status(200).json({
-              user,
-              message: `Successfully logged in!`,
+              user: {
+                name: user.name,
+                id: user.id,
+                email,
+                role: user.role,
+                location: user.location,
+                specialties: user.specialties,
+                description: user.description,
+                paymentPreference: user.paymentPreference
+              },
+
+              message: `Success! ${email} logged in!`,
               sessionToken: token,
             });
           } else {
