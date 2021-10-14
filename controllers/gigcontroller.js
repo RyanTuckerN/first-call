@@ -4,12 +4,12 @@ const { Gig, User, CallStack } = require("../models");
 const CallStackModel = require("../models/CallStackModel");
 const newEmail = require("../helpers/newEmail");
 const validateSession = require("../middleware/validateSession");
-const {v4: uuidv4}= require('uuid')
+const { v4: uuidv4 } = require("uuid");
 
 //CREATE A GIG
 router.post("/", validateSession, async (req, res) => {
   const { description, date, payment, location, optionalInfo } = req.body;
-  const token = uuidv4()
+  const token = uuidv4();
   try {
     const newGig = await Gig.create({
       ownerId: req.user.id,
@@ -18,11 +18,11 @@ router.post("/", validateSession, async (req, res) => {
       payment,
       location,
       optionalInfo,
-      token
+      token,
     });
-    res.status(200).json({ newGig, message: 'success' });
+    res.status(200).json({ newGig, message: "success" });
   } catch (err) {
-    res.status(500).json({ err, message: 'failure' });
+    res.status(500).json({ err, message: "failure" });
   }
 });
 
@@ -38,7 +38,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
       Object.keys(stackTable),
       Object.values(stackTable),
     ];
-    
+
     if (
       //if no roles are defined in request
       roles.length === 0 ||
@@ -67,7 +67,6 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     }
     await Gig.addUserToGig(gig.ownerId, gig.id);
 
-
     /*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
      *** *** *** *** *** *** DO I NEED TO DO THIS LIKE THIS? *** *** *** *** *** ***
      *** *** *** OR WILL MY CODE AWAIT THIS BLOCK OUTSIDE OF ITS SCOPE?* *** *** ***
@@ -95,7 +94,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
         .json({ message: `Callstack already exists for gig ${gigId}.` });
       return;
     }
-    res.status(500).json({err, message: 'failure'});
+    res.status(500).json({ err, message: "failure" });
     console.error(err);
   }
 });
@@ -104,23 +103,44 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
 //SHOULD PROBABLY MAKE THIS A PROTECTED ROUTE
 router.get("/:gigId", validateSession, async (req, res) => {
   const { gigId } = req.params;
+  const { id } = req.user;
   try {
+    const user = await User.findOne({ where: { id } });
+
+    const gig = await Gig.findOne({
+      where: { id: gigId },
+      include: { model: CallStack },
+    });
+
+    const GigStack = new CallStackModel(gig.callStack);
+    const confirmed = gig.callStack ? GigStack.returnConfirmed() : [];
+    const onCalls = gig.callStack ? GigStack.returnOpenCalls() : [];
+
     const query = await Gig.getGigInfo(gigId);
+
     if (query) {
       const authorizedUsers = [
         query.bandLeader.id,
-        ...query.bandMembers.map((user) => user.id),
+        ...query.bandMembers.map((p) => p.id),
       ];
-      if (!authorizedUsers.includes(req.user.id)) {
+      if (!authorizedUsers.includes(id) && !onCalls.includes(user.email)) {
         res.status(403).json({ message: "⛔ You don't have access ⛔" });
         return;
       }
-      res.status(200).json({query, message: 'success'});
+      confirmed.forEach((person) => {
+        if (!query.bandMembers.map((p) => p.email).includes(person.email)) {
+          query.bandMembers.push(person);
+        }
+      });
+      if (req.user.id !== query.bandLeader.id) {
+        delete query.gig.callStack;
+      }
+      res.status(200).json({ gigInfo: query, message: "success" });
     } else {
       res.status(404).json({ message: "Gig not found" });
     }
   } catch (err) {
-    res.status(500).json({ err, message: 'failure' });
+    res.status(500).json({ err, message: "failure" });
   }
 });
 
@@ -145,7 +165,7 @@ router.post(
       const GigStack = new CallStackModel(callStack);
       const userAuth = parseInt(userId) === req.user.id;
       if (!userAuth) {
-      // if (false) {
+        // if (false) {
         //use this for testing, in reality we want userAuth so only logged-in user can accept the gig
         res
           .status(400)
@@ -165,9 +185,9 @@ router.post(
       await Gig.addUserToGig(userId, gigId);
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
       await CallStack.update(GigStack, { where: { gigId } });
-      res.status(200).json({ updatedStack: GigStack, message: 'success' });
+      res.status(200).json({ updatedStack: GigStack, message: "success" });
     } catch (err) {
-      res.status(500).json({ err, message: 'failure' });
+      res.status(500).json({ err, message: "failure" });
     }
   }
 );
@@ -212,9 +232,9 @@ router.post(
 
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
-      res.status(200).json({ updatedStack: GigStack, message: 'success' });
+      res.status(200).json({ updatedStack: GigStack, message: "success" });
     } catch (err) {
-      res.status(500).json({ err, message: 'failure' });
+      res.status(500).json({ err, message: "failure" });
     }
   }
 );
@@ -260,9 +280,7 @@ router.post(
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
 
-      res
-        .status(200)
-        .json({ message: `success`, updatedCallStack: GigStack });
+      res.status(200).json({ message: `success`, updatedCallStack: GigStack });
     } catch (err) {
       res.status(500).json({ message: `Something has gone wrong!` });
     }
@@ -293,9 +311,9 @@ router.post(
         return;
       }
       const GigStack = new CallStackModel(gig.callStack);
-      if(GigStack.returnRoles().includes(role)){
-        res.status(400).json({message: `${role} already exists`})
-        return
+      if (GigStack.returnRoles().includes(role)) {
+        res.status(400).json({ message: `${role} already exists` });
+        return;
       }
 
       const roleStack = GigStack.addRoleToStackTable(role, calls);
@@ -309,12 +327,12 @@ router.post(
       if (roleStack.onCall === firstCall && firstCall !== null) {
         await newEmail(roleStack.onCall, 100, gigId, gigOwner.email, { role });
       }
-      GigStack.setGigNotFilled()
+      GigStack.setGigNotFilled();
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
-      res.status(200).json({ roleStack, message: 'success' });
+      res.status(200).json({ roleStack, message: "success" });
     } catch (err) {
-      res.status(500).json({ err, message: 'failure' });
+      res.status(500).json({ err, message: "failure" });
     }
   }
 );
@@ -328,9 +346,9 @@ router.get("/test/test", async (req, res) => {
     // where: { gigId: 1 },
     // include: [{ model: User }, { model: CallStack }],
     // });
-    res.status(200).json({query, message: 'success'});
+    res.status(200).json({ query, message: "success" });
   } catch (err) {
-    res.status(500).json({err, message: 'failure'});
+    res.status(500).json({ err, message: "failure" });
   }
 });
 
@@ -348,13 +366,13 @@ router.get("/:gigId/users", validateSession, async (req, res) => {
         res.status(403).json({ message: "⛔ You don't have access ⛔" });
         return;
       }
-      const users = [query.bandLeader, ...query.bandMembers]
-      res.status(200).json({users, message: 'success'});
+      const users = [query.bandLeader, ...query.bandMembers];
+      res.status(200).json({ users, message: "success" });
     } else {
       res.status(404).json({ message: "Gig not found" });
     }
   } catch (err) {
-    res.status(500).json({ err, message: 'failure' });
+    res.status(500).json({ err, message: "failure" });
   }
 });
 

@@ -122,6 +122,8 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
     //will be undefined if user doesn't have an account
     const sender = await User.findOne({ where: { email: senderEmail } });
 
+    const gigInfo = await Gig.getGigInfo(gig.id)
+    
     console.log("USER EXISTS? :", options.receiverExists);
 
     const details = {

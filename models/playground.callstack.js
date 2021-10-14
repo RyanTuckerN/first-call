@@ -1,4 +1,4 @@
-const CallStackModel = require("./CallStackModel");
+// const CallStackModel = require("./CallStackModel");
 
 const obj = {
   filled: false,
@@ -39,21 +39,21 @@ const obj2 = {
   gigId: 4
 };
 
-const GigStack = new CallStackModel(obj2);
-GigStack.setFirstCalls()
-// GigStack.addRoleToStackTable('bass', ['bass1@gmail.com', "bass2@gmail.com"])
-console.log(GigStack.addCallToStack('bass', ['testing@gmail.com', 'feather@heather.com']))
-console.log(GigStack.addCallToStack('bass', ['testing321@gmail.com', 'test23', 'fart']))
-console.log(GigStack.addCallToStack('bass', 'soMuchForRushing@gmail.com'))
-console.log('*************************')
-GigStack.logStacks()
-console.log('*************************')
-// GigStack.setF
-// GigStack.returnRoles
-GigStack.addRoleToStackTable('baixon', ['Markopetrichiv@me.com', 'test@me.com'])
-GigStack.returnRoles().forEach(role=>GigStack.setStackFilled(role))
-// console.log(GigStack.stackTable);
-GigStack.log()
+// const GigStack = new CallStackModel(obj2);
+// GigStack.setFirstCalls()
+// // GigStack.addRoleToStackTable('bass', ['bass1@gmail.com', "bass2@gmail.com"])
+// console.log(GigStack.addCallToStack('bass', ['testing@gmail.com', 'feather@heather.com']))
+// console.log(GigStack.addCallToStack('bass', ['testing321@gmail.com', 'test23', 'fart']))
+// console.log(GigStack.addCallToStack('bass', 'soMuchForRushing@gmail.com'))
+// console.log('*************************')
+// GigStack.logStacks()
+// console.log('*************************')
+// // GigStack.setF
+// // GigStack.returnRoles
+// GigStack.addRoleToStackTable('baixon', ['Markopetrichiv@me.com', 'test@me.com'])
+// GigStack.returnRoles().forEach(role=>GigStack.setStackFilled(role))
+// // console.log(GigStack.stackTable);
+// GigStack.log()
 
 // console.log(GigStack.returnNext("accordian"));
 // console.log(GigStack.returnNext("accordian"));

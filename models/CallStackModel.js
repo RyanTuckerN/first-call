@@ -49,6 +49,13 @@ module.exports = class CallStackModel {
     return Object.keys(this.stackTable);
   }
 
+  returnConfirmed() {
+    return this.returnRoles()
+      .filter((r) => this.stackTable[r].filled)
+      .map((r) => {
+        return { email: this.stackTable[r].confirmed, role: r };
+      });
+  }
   /**
    *   sets specific stack to filled, takes role as string
   sets current 'oncall' to 'confirmed' and removes 'oncall' key
@@ -201,12 +208,12 @@ module.exports = class CallStackModel {
   }
 
   /**
-   * remove duplicates and filter falsy values from each callstack 
+   * remove duplicates and filter falsy values from each callstack
    */
   filterStacks() {
     this.returnRoles().forEach((role) => {
       this.stackTable[role].calls = [
-        ...new Set(this.stackTable[role].calls)
+        ...new Set(this.stackTable[role].calls),
       ].filter((r) => r);
     });
   }

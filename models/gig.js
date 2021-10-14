@@ -1,4 +1,5 @@
-const { DataTypes, UUIDV4 } = require("sequelize");
+const { DataTypes } = require("sequelize");
+const CallStackModel = require("./CallStackModel");
 const sequelize = require("../db");
 
 const Gig = sequelize.define("gig", {
@@ -22,8 +23,8 @@ const Gig = sequelize.define("gig", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  token: {type: DataTypes.UUID, allowNull: false},
-  openCalls: {type: DataTypes.ARRAY(DataTypes.STRING), defaultValue: []},
+  token: { type: DataTypes.UUID, allowNull: false },
+  openCalls: { type: DataTypes.ARRAY(DataTypes.STRING), defaultValue: [] },
   optionalInfo: DataTypes.JSONB,
 });
 
@@ -100,21 +101,29 @@ Gig.getGigInfo = async (gigId) => {
 
       //find all users that have an account
       const users = await gig.getUsers();
+      const roleHash = callStack
+        ? new CallStackModel(callStack)?.returnConfirmed().reduce((a, b) => {
+            a[b.email] = b.role;
+            return a;
+          }, {})
+        : {};
 
       //filter out owner, and map over members returning only their email addresses and ids
       response.bandMembers = users
         .filter((user) => user.id !== gig.ownerId)
         .map((user) => {
           return user.name
-          //include name if user has added it
-            ? {
+            ? //include name if user has added it
+              {
                 id: user.id,
                 email: user.email,
                 name: user.name,
+                role: roleHash[user.email],
               }
             : {
                 id: user.id,
                 email: user.email,
+                role: roleHash[user.email],
               };
         });
       // response.users = users;
