@@ -1,7 +1,8 @@
 const express = require("express");
-const { Post, Gig } = require("../models");
+const { Post, Gig, User } = require("../models");
 const router = express.Router();
 const validateSession = require("../middleware/validateSession");
+const postOrganizer = require("../helpers/postOrganizer");
 
 //ALL OF THESE NEED VALIDATION
 //  -VALIDATESESSION MIDDLEWARE
@@ -218,30 +219,45 @@ router.post("/:gigId/post/:postId/delete", async (req, res) => {
 
 //get all posts by gigId
 router.get("/:gigId", async (req, res) => {
-  const { gigId } = req.params;
-  // const { id } = req.user
-  const id = 3;
+  try {
+    const { gigId } = req.params;
+    // const { id } = req.user
+    const id = 1;
 
-  const gig = await Gig.findOne({
-    where: { id: gigId },
-    include: { model: Post },
-  });
-  const users = await gig.getUsers();
+    const gig = await Gig.findOne({
+      where: { id: gigId },
+      include: [
+        {
+          model: Post,
+          include: { model: User, attributes: ["name", "email"] },
+        },
+      ],
+    });
+    const users = await gig.getUsers();
 
-  //if user is not on the gig
-  if (!users.map((u) => u.id).includes(id)) {
-    res.status(403).json({ message: "not authorized!" });
-    return;
-  }
-
-  if (!gig.posts.length) {
-    res.status(404).json({ message: "no posts!" });
-    return;
+    //if user is not on the gig
+    if (!users.map((u) => u.id).includes(id)) {
+      res.status(403).json({ message: "not authorized!" });
+      return;
+    }
+    const response = postOrganizer(gig.posts);
+    res.status(200).json(response);
+  } catch (err) {
+    res.status(500).json({ err });
   }
   // res.status(200).json({ count: posts.count, posts: posts.rows });
-  res
-    .status(200)
-    .json({ posts: gig.posts, count: gig.posts.length, message: "success" });
+  // res
+  //   .status(200)
+  //   .json({ posts: gig.posts, count: gig.posts.length, message: "success" });
+});
+
+router.get("/:gigId/test", validateSession, async (req, res) => {
+  try {
+    const posts = await Post.findAll({});
+    res.status(200).json({ posts });
+  } catch (err) {
+    res.status(500).json({ err });
+  }
 });
 
 module.exports = router;
