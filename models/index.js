@@ -22,8 +22,6 @@ Notification.belongsTo(User)
 User.belongsToMany(Gig, {through: 'user_gigs'})
 Gig.belongsToMany(User, {through: 'user_gigs'})
 
-// Post.hasMany(Post, {as: 'child', foreignKey: 'childOf'})
-
 module.exports = { 
   User, 
   Gig, 

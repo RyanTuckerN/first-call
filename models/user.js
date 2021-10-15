@@ -15,7 +15,7 @@ const User = sequelize.define(
       
     },
     role: DataTypes.STRING,
-    name: DataTypes.STRING,
+    name: {type: DataTypes.STRING, allowNull: false},
     description: DataTypes.STRING,
     location: DataTypes.STRING,
     paymentPreference: DataTypes.JSONB,

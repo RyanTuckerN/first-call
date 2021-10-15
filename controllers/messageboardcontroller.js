@@ -8,6 +8,7 @@ const postOrganizer = require("../helpers/postOrganizer");
 //  -VALIDATESESSION MIDDLEWARE
 //  -AUTHENTICATION BASED ON req.user.id
 
+
 //new post
 router.post("/:gigId/newPost/:childOf?", async (req, res) => {
   try {
@@ -36,6 +37,8 @@ router.post("/:gigId/newPost/:childOf?", async (req, res) => {
     res.status(500).json({ err });
   }
 });
+
+
 
 //upvvote a post
 router.post("/:gigId/post/:postId/upvote", async (req, res) => {
@@ -75,6 +78,8 @@ router.post("/:gigId/post/:postId/upvote", async (req, res) => {
   }
 });
 
+
+
 //remove an upvote
 router.post("/:gigId/post/:postId/removeUpvote", async (req, res) => {
   const { gigId, postId } = req.params;
@@ -111,6 +116,8 @@ router.post("/:gigId/post/:postId/removeUpvote", async (req, res) => {
     res.status(500).json({ err });
   }
 });
+
+
 
 //edit text of post
 router.put("/:gigId/post/:postId/edit", async (req, res) => {
@@ -167,6 +174,8 @@ router.put("/:gigId/post/:postId/edit", async (req, res) => {
   }
 });
 
+
+
 //"delete" a post
 router.post("/:gigId/post/:postId/delete", async (req, res) => {
   const { gigId, postId } = req.params;
@@ -217,6 +226,8 @@ router.post("/:gigId/post/:postId/delete", async (req, res) => {
   }
 });
 
+
+
 //get all posts by gigId
 router.get("/:gigId", async (req, res) => {
   try {
@@ -251,13 +262,15 @@ router.get("/:gigId", async (req, res) => {
   //   .json({ posts: gig.posts, count: gig.posts.length, message: "success" });
 });
 
-router.get("/:gigId/test", validateSession, async (req, res) => {
-  try {
-    const posts = await Post.findAll({});
-    res.status(200).json({ posts });
-  } catch (err) {
-    res.status(500).json({ err });
-  }
-});
+
+
+// router.get("/:gigId/test", validateSession, async (req, res) => {
+//   try {
+//     const posts = await Post.findAll({});
+//     res.status(200).json({ posts });
+//   } catch (err) {
+//     res.status(500).json({ err });
+//   }
+// });
 
 module.exports = router;

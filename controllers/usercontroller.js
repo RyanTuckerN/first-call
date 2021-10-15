@@ -23,7 +23,7 @@ router.post("/signup", (req, res) => {
       res.status(200).json({
         user: {
           id: user.id,
-          email,          
+          email,
         },
         message: `Success! Account created for ${email}!`,
         sessionToken: token,
@@ -46,18 +46,9 @@ router.post("/login", (req, res) => {
             const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
               expiresIn: 86400,
             });
-
+            delete user.passwordhash
             res.status(200).json({
-              user: {
-                name: user.name,
-                id: user.id,
-                email,
-                role: user.role,
-                location: user.location,
-                specialties: user.specialties,
-                description: user.description,
-                paymentPreference: user.paymentPreference
-              },
+              user,
 
               message: `Success! ${email} logged in!`,
               sessionToken: token,
@@ -79,11 +70,20 @@ router.post("/login", (req, res) => {
 router.put("/profile", validateSession, async (req, res) => {
   const { id } = req.user;
   try {
-    const result = await User.update(req.body, { where: { id } });
+    const result = await User.update(req.body, {
+      where: { id },
+      returning: true,
+    });
     if (!result[0]) {
       res.status(403).json({ message: "Account not found" });
     } else {
-      res.status(200).json({ message: `Profile ${id} has been updated.'` });
+      delete result[1][0].dataValues.passwordhash;
+      res
+        .status(200)
+        .json({
+          message: `Profile ${id} has been updated.'`,
+          user: result[1][0],
+        });
     }
   } catch (err) {
     res.status(500).json({ message: "Oops, something went wrong!", err });
