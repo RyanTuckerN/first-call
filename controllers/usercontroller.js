@@ -24,8 +24,9 @@ router.post("/signup", (req, res) => {
         user: {
           id: user.id,
           email,
+          name
         },
-        message: `Success! Account created for ${email}!`,
+        message: `Success! Account created for ${name}!`,
         sessionToken: token,
       });
     })
@@ -48,9 +49,12 @@ router.post("/login", (req, res) => {
             });
             delete user.passwordhash
             res.status(200).json({
-              user,
-
-              message: `Success! ${email} logged in!`,
+              user: {
+                id: user.id,
+                email,
+                name: user.name
+              },
+              message: `Success! ${user.name} logged in!`,
               sessionToken: token,
             });
           } else {

@@ -13,6 +13,7 @@ db.sync({
 });
 
 app.use(express.json());
+app.use(require('./middleware/headers'))
 
 app.use("/user", controllers.user);
 app.use("/gig", controllers.gig);
