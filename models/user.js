@@ -12,20 +12,20 @@ const User = sequelize.define(
     passwordhash: {
       type: DataTypes.STRING,
       allowNull: false,
-      
     },
     role: DataTypes.STRING,
-    name: {type: DataTypes.STRING, allowNull: false},
+    emails: { type: DataTypes.BOOLEAN, defaultValue: true },
+    name: { type: DataTypes.STRING, allowNull: false },
     description: DataTypes.STRING,
     location: DataTypes.STRING,
     paymentPreference: DataTypes.JSONB,
     specialties: DataTypes.ARRAY(DataTypes.STRING(20)),
-  },
+  }
   // {
   //   defaultScope: {
   //     attributes: { exclude: ["passwordhash"] },
   //   },
-  
+
   // }
 );
 
