@@ -24,7 +24,7 @@ router.post("/signup", (req, res) => {
         user: {
           id: user.id,
           email,
-          name
+          name,
         },
         message: `Success! Account created for ${name}!`,
         sessionToken: token,
@@ -38,22 +38,20 @@ router.post("/login", (req, res) => {
   const { email, password } = req.body;
   User.findOne({
     where: { email },
+    // include: {all: true, nested: true}
     // attributes: { include: ["passwordhash"] },
   })
     .then((user) => {
+      console.log(user);
       if (user) {
         bcrypt.compare(password, user.passwordhash, (err, match) => {
           if (match) {
             const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
               expiresIn: 86400,
             });
-            delete user.passwordhash
+            delete user.passwordhash;
             res.status(200).json({
-              user: {
-                id: user.id,
-                email,
-                name: user.name
-              },
+              user,
               message: `Success! ${user.name} logged in!`,
               sessionToken: token,
             });
@@ -82,12 +80,10 @@ router.put("/profile", validateSession, async (req, res) => {
       res.status(403).json({ message: "Account not found" });
     } else {
       delete result[1][0].dataValues.passwordhash;
-      res
-        .status(200)
-        .json({
-          message: `Profile ${id} has been updated.'`,
-          user: result[1][0],
-        });
+      res.status(200).json({
+        message: `Profile ${id} has been updated.'`,
+        user: result[1][0],
+      });
     }
   } catch (err) {
     res.status(500).json({ message: "Oops, something went wrong!", err });
@@ -114,12 +110,28 @@ router.get("/offers", validateSession, async (req, res) => {
 router.get("/notifications", validateSession, async (req, res) => {
   const { id } = req.user;
   try {
-    const notifications = await Notification.findAndCountAll({
+    const notifications = await Notification.findAll({
       where: { userId: id },
     });
-    res.status(200).json({ message: "success", notifications });
+    res.status(200).json({auth: true, notifications, message: 'success!'});
   } catch (err) {
-    console.log(err), res.status(500).json({ err, message: "failure" });
+    console.log(err), res.status(500).json({ err, message: "failure", auth:false });
+  }
+});
+
+router.get("/auth", validateSession, async (req, res) => {
+  const { id } = req.user;
+  try {
+    const user = await User.findOne({
+      where: { id },
+      // include: { all: true, nested: true },
+    });
+    delete user.passwordhash;
+    res
+      .status(200)
+      .json({ auth: true, user: { ...user.dataValues, passwordhash: null } });
+  } catch (err) {
+    res.status(500).json({ err, auth: false });
   }
 });
 
