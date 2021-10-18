@@ -14,6 +14,7 @@ const User = sequelize.define(
       allowNull: false,
     },
     role: DataTypes.STRING,
+    photo: DataTypes.STRING(2048),
     emails: { type: DataTypes.BOOLEAN, defaultValue: true },
     name: { type: DataTypes.STRING, allowNull: false },
     description: DataTypes.STRING,

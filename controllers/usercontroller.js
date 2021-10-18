@@ -8,12 +8,13 @@ const validateSession = require("../middleware/validateSession");
 
 //SIGNUP FOR NEW USER
 router.post("/signup", (req, res) => {
-  const { password, email, name } = req.body;
+  const { password, email, name, photo } = req.body;
 
   User.create({
     passwordhash: bcrypt.hashSync(password, 13),
     email,
     name,
+    photo,
   })
     .then((user) => {
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
@@ -71,13 +72,13 @@ router.post("/login", (req, res) => {
 //EDIT/ADD PROFILE TO USER ACCOUNT
 router.put("/profile", validateSession, async (req, res) => {
   const { id } = req.user;
-  console.log(id)
+  console.log(id);
   try {
     const result = await User.update(req.body, {
       where: { id },
       returning: true,
     });
-    console.log(result)
+    console.log(result);
     if (!result[0]) {
       res.status(403).json({ message: "Account not found" });
     } else {
@@ -116,9 +117,32 @@ router.get("/notifications", validateSession, async (req, res) => {
     const notifications = await Notification.findAll({
       where: { userId: id },
     });
-    res.status(200).json({auth: true, notifications, message: 'success!'});
+    res.status(200).json({ auth: true, notifications, message: "success!" });
   } catch (err) {
-    console.log(err), res.status(500).json({ err, message: "failure", auth:false });
+    console.log(err),
+      res.status(500).json({ err, message: "failure", auth: false });
+  }
+});
+
+//update password
+router.post("/update-password", validateSession, async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { password, newPassword } = req.body;
+    const user = await User.findOne({ where: { id } });
+    user ?
+      bcrypt.compare(password, user.passwordhash, async(err, match) => {
+        if (match) {
+          //change password
+          const passwordhash = bcrypt.hashSync(newPassword, 13)
+          await user.update({passwordhash})
+          res.status(200).json({success: true})
+        } else {
+          res.status(502).json({ message: "🛑 Incorrect Password 🛑", err, success: false });
+        }
+      }) : res.status(500).json({message: 'something went wrong!', success: false})
+  } catch (err) {
+    res.status(500).send({ message: "failure", err, success: false });
   }
 });
 
