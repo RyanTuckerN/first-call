@@ -71,17 +71,20 @@ router.post("/login", (req, res) => {
 //EDIT/ADD PROFILE TO USER ACCOUNT
 router.put("/profile", validateSession, async (req, res) => {
   const { id } = req.user;
+  console.log(id)
   try {
     const result = await User.update(req.body, {
       where: { id },
       returning: true,
     });
+    console.log(result)
     if (!result[0]) {
       res.status(403).json({ message: "Account not found" });
     } else {
       delete result[1][0].dataValues.passwordhash;
       res.status(200).json({
-        message: `Profile ${id} has been updated.'`,
+        message: `success`,
+        success: true,
         user: result[1][0],
       });
     }
