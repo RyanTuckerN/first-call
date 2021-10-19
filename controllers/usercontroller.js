@@ -99,14 +99,14 @@ router.get("/offers", validateSession, async (req, res) => {
   const { id } = req.user;
   try {
     const user = await User.findOne({ where: { id } });
-    const offers = await Gig.findAndCountAll({
+    const offers = await Gig.findAll({
       where: { openCalls: { [Op.contains]: [user.email] } },
       include: { model: CallStack },
     });
-    res.status(200).json({ offers, message: "success!" });
+    res.status(200).json({ offers, message: "success!", success: true });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ err, message: "failure" });
+    res.status(500).json({ err, message: "failure", success: false });
   }
 });
 
@@ -152,7 +152,7 @@ router.get("/auth", validateSession, async (req, res) => {
     const user = await User.findOne({
       where: { id },
       // include: { all: true, nested: true },
-    });
+    include: {model: Gig, include: {model: CallStack}}});
     delete user.passwordhash;
     res
       .status(200)

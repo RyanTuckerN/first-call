@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs");
 
 /**
  * @param {String} to email address
- * @param {Number} emailCode 3 digit email code: {100: gig invite, 200: gig decline, 201: gig accept, 300: gig filled!, 301: gig has empty stack400: custom email}
+ * @param {Number} emailCode 3 digit email code: {100: gig invite, 200: gig decline, 201: gig accept, 300: gig filled!, 301: gig has empty stack, 400: custom email}
  * @param {Number} gigId id of Gig instance being referenced
  * @param {String} senderEmail email address of person initiating message
  * @param {Object?} [options]
