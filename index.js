@@ -19,6 +19,7 @@ app.use("/user", controllers.user);
 app.use("/gig", controllers.gig);
 app.use("/board", controllers.messageboard);
 app.use("/open", controllers.open);
+app.use("/notification", controllers.notificiation);
 app.use("/", (req, res) =>
   res
     .status(200)

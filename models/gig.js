@@ -96,7 +96,7 @@ Gig.getGigInfo = async (gigId) => {
 
       response.bandLeader = await sequelize.models.user.findOne({
         where: { id: gig.ownerId },
-        attributes: ["id", "email", "name"],
+        attributes: ["id", "email", "name", "photo"],
       });
 
       //find all users that have an account
