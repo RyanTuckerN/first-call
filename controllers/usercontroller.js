@@ -74,14 +74,12 @@ router.post("/login", (req, res) => {
 //EDIT/ADD PROFILE TO USER ACCOUNT
 router.put("/profile", validateSession, async (req, res) => {
   const { id } = req.user;
-  console.log(id);
   try {
     const user = await User.findOne({where: {id}, include: {model: Gig, include: {model: CallStack}}})
     if (!user) {
       res.status(403).json({ message: "Account not found" });
     } else {
     const result = await user.update(req.body);
-    console.log(result);
       delete user.passwordhash;
       res.status(200).json({
         message: `success`,
@@ -102,7 +100,7 @@ router.get("/offers", validateSession, async (req, res) => {
     const user = await User.findOne({ where: { id } });
     const offers = await Gig.findAll({
       where: { openCalls: { [Op.contains]: [user.email] } },
-      include: { model: CallStack },
+      include: [{ model: CallStack }, { model: User }],
     });
     res.status(200).json({ offers, message: "success!", success: true });
   } catch (err) {

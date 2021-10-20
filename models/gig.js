@@ -23,6 +23,7 @@ const Gig = sequelize.define("gig", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  photo: DataTypes.STRING,
   token: { type: DataTypes.UUID, allowNull: false },
   openCalls: { type: DataTypes.ARRAY(DataTypes.STRING), defaultValue: [] },
   optionalInfo: DataTypes.JSONB,
