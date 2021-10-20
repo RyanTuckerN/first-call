@@ -367,12 +367,12 @@ router.get("/:gigId/users", validateSession, async (req, res) => {
         return;
       }
       const users = [query.bandLeader, ...query.bandMembers];
-      res.status(200).json({ users, message: "success" });
+      res.status(200).json({ users, message: "success", success: 'true' });
     } else {
-      res.status(404).json({ message: "Gig not found" });
+      res.status(404).json({ message: "Gig not found", success: false });
     }
   } catch (err) {
-    res.status(500).json({ err, message: "failure" });
+    res.status(500).json({ err, message: "failure", success: false });
   }
 });
 

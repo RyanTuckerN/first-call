@@ -39,6 +39,8 @@ router.post("/login", (req, res) => {
   const { email, password } = req.body;
   User.findOne({
     where: { email },
+    include: { model: Gig, include: { model: CallStack } },
+
     // include: {all: true, nested: true}
     // attributes: { include: ["passwordhash"] },
   })
@@ -74,19 +76,18 @@ router.put("/profile", validateSession, async (req, res) => {
   const { id } = req.user;
   console.log(id);
   try {
-    const result = await User.update(req.body, {
-      where: { id },
-      returning: true,
-    });
-    console.log(result);
-    if (!result[0]) {
+    const user = await User.findOne({where: {id}, include: {model: Gig, include: {model: CallStack}}})
+    if (!user) {
       res.status(403).json({ message: "Account not found" });
     } else {
-      delete result[1][0].dataValues.passwordhash;
+    const result = await user.update(req.body);
+    console.log(result);
+      delete user.passwordhash;
       res.status(200).json({
         message: `success`,
         success: true,
-        user: result[1][0],
+        user,
+        result
       });
     }
   } catch (err) {
@@ -130,33 +131,46 @@ router.post("/update-password", validateSession, async (req, res) => {
     const { id } = req.user;
     const { password, newPassword } = req.body;
     const user = await User.findOne({ where: { id } });
-    user ?
-      bcrypt.compare(password, user.passwordhash, async(err, match) => {
-        if (match) {
-          //change password
-          const passwordhash = bcrypt.hashSync(newPassword, 13)
-          await user.update({passwordhash})
-          res.status(200).json({success: true})
-        } else {
-          res.status(502).json({ message: "🛑 Incorrect Password 🛑", err, success: false });
-        }
-      }) : res.status(500).json({message: 'something went wrong!', success: false})
+    user
+      ? bcrypt.compare(password, user.passwordhash, async (err, match) => {
+          if (match) {
+            //change password
+            const passwordhash = bcrypt.hashSync(newPassword, 13);
+            await user.update({ passwordhash });
+            res.status(200).json({ success: true });
+          } else {
+            res
+              .status(502)
+              .json({
+                message: "🛑 Incorrect Password 🛑",
+                err,
+                success: false,
+              });
+          }
+        })
+      : res
+          .status(500)
+          .json({ message: "something went wrong!", success: false });
   } catch (err) {
     res.status(500).send({ message: "failure", err, success: false });
   }
 });
 
+//authorize a user
 router.get("/auth", validateSession, async (req, res) => {
   const { id } = req.user;
   try {
     const user = await User.findOne({
       where: { id },
       // include: { all: true, nested: true },
-    include: {model: Gig, include: {model: CallStack}}});
+      include: { model: Gig, include: { model: CallStack } },
+    });
+    // const gigs = await user.getGigs()
+
     delete user.passwordhash;
     res
       .status(200)
-      .json({ auth: true, user: { ...user.dataValues, passwordhash: null } });
+      .json({ auth: true, user: { ...user.dataValues, passwordhash: null },  });
   } catch (err) {
     res.status(500).json({ err, auth: false });
   }
