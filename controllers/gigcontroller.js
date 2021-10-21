@@ -26,6 +26,49 @@ router.post("/", validateSession, async (req, res) => {
   }
 });
 
+//UPDATE GIG
+router.put("/:gigId", validateSession, async (req, res) => {
+  try {
+    const { gigId } = req.params;
+    const ownerId = req.user?.id;
+    const gig = await Gig.findOne({ where: { id: gigId, ownerId } });
+    if (!gig) {
+      res.status(500).json({ success: false, message: "ENTRY_NOT_FOUND" });
+      return;
+    }
+    const result = await gig.update(req.body);
+    res
+      .status(200)
+      .json({ success: true, message: "ENTRY_UPDATED", gig, result });
+  } catch (error) {}
+});
+
+//EDIT/ADD PROFILE TO USER ACCOUNT
+router.put("/profile", validateSession, async (req, res) => {
+  const { id } = req.user;
+  try {
+    const user = await User.findOne({
+      where: { id },
+      include: { model: Gig, include: { model: CallStack } },
+    });
+    if (!user) {
+      res.status(403).json({ message: "Account not found" });
+      return;
+    } else {
+      const result = await user.update(req.body);
+      delete user.passwordhash;
+      res.status(200).json({
+        message: `success`,
+        success: true,
+        user,
+        result,
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ message: "Oops, something went wrong!", err });
+  }
+});
+
 //CREATE A CALLSTACK OBJ FOR YOUR GIG.
 //CALLSTACK REQUEST SHOULD BE JSON OBJ 'stackTable' WITH A KEY REPRESENTING EACH INTSTRUMENT
 //EACH KEY HAS VALUE OF ARRAY OF EMAIL ADDRESSES, IN ORDER OF CALL (1ST, 2ND, 3RD ETC)
@@ -367,7 +410,7 @@ router.get("/:gigId/users", validateSession, async (req, res) => {
         return;
       }
       const users = [query.bandLeader, ...query.bandMembers];
-      res.status(200).json({ users, message: "success", success: 'true' });
+      res.status(200).json({ users, message: "success", success: "true" });
     } else {
       res.status(404).json({ message: "Gig not found", success: false });
     }
