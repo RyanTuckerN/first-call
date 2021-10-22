@@ -7,17 +7,18 @@ const newEmail = require("../helpers/newEmail");
 const bcrypt = require("bcryptjs");
 
 //ACCEPT A GIG OFFER
-router.post("/:gigId/addUser/:email/:role", async (req, res) => {
-  const { email, gigId, role } = req.params;
-
+router.post("/:gigId/addUser/:email/:role/:token", async (req, res) => {
   try {
+    const { email, gigId, role, token } = req.params;
+    const { name } = req.body;
+
     const gig = await Gig.findOne({
-      where: { id: gigId },
+      where: { id: gigId, token },
       include: [{ model: CallStack }, { model: User }],
     });
     const callStack = gig.callStack;
     const gigOwner = gig.user;
-    if (!callStack || !gig || !gigOwner)
+    if (!callStack || !gig || !gigOwner || !token || !name)
       throw new Error("something is wrong with the query");
 
     const GigStack = new CallStackModel(callStack);
@@ -35,7 +36,7 @@ router.post("/:gigId/addUser/:email/:role", async (req, res) => {
             err,
           });
         } else if (success) {
-          GigStack.setStackFilled(role);
+          GigStack.setStackFilled(role, name);
           GigStack.checkFilled()
             ? await newEmail(gigOwner.email, 300, gigId, onCall, { role })
             : await newEmail(gigOwner.email, 201, gigId, onCall, { role });
@@ -43,7 +44,7 @@ router.post("/:gigId/addUser/:email/:role", async (req, res) => {
           // await Gig.addUserToGig(userId, gigId);
           await CallStack.update(GigStack, { where: { gigId } });
           await gig.update({ openCalls: GigStack.returnOpenCalls() });
-          res.status(200).json({ updatedStack: GigStack, message: "success!" });
+          res.status(200).json({  message: "success!", success: true });
         } else {
           res.status(500).json({
             message:
@@ -58,10 +59,10 @@ router.post("/:gigId/addUser/:email/:role", async (req, res) => {
 });
 
 //DECLINE A GIG OFFER
-router.post("/:gigId/decline/:email/:role", async (req, res) => {
-  const { email, gigId, role } = req.params;
-
+router.post("/:gigId/decline/:email/:role/:token", async (req, res) => {
   try {
+    const { email, gigId, role, token } = req.params;
+
     const gig = await Gig.findOne({
       where: { id: gigId },
       include: [{ model: CallStack }, { model: User }],
@@ -99,7 +100,7 @@ router.post("/:gigId/decline/:email/:role", async (req, res) => {
           }
           await CallStack.update(GigStack, { where: { gigId } });
           await gig.update({ openCalls: GigStack.returnOpenCalls() });
-          res.status(200).json({ updatedStack: GigStack, message: "success" });
+          res.status(200).json({ message: "success!", success: true });
         } else {
           res.status(500).json({
             message:

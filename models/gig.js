@@ -84,6 +84,7 @@ Gig.getGigInfo = async (gigId) => {
 
     // console.log(posts)
     if (gig) {
+      console.log('*** *** *** ** ** * ** * * ',gig)
       const response = {
         gig: {
           description: gig.description,
@@ -94,20 +95,24 @@ Gig.getGigInfo = async (gigId) => {
           posts,
         },
       };
-
+ 
       response.bandLeader = await sequelize.models.user.findOne({
         where: { id: gig.ownerId },
         attributes: ["id", "email", "name", "photo"],
       });
 
       //find all users that have an account
-      const users = await gig.getUsers();
+      const users = await gig.getUsers({});
+      console.log('🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥', users)
+      
       const roleHash = callStack
         ? new CallStackModel(callStack)?.returnConfirmed().reduce((a, b) => {
             a[b.email] = b.role;
             return a;
           }, {})
         : {};
+
+        
 
       //filter out owner, and map over members returning only their email addresses and ids
       response.bandMembers = users

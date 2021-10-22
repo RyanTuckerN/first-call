@@ -10,6 +10,7 @@ const { v4: uuidv4 } = require("uuid");
 router.post("/", validateSession, async (req, res) => {
   const { description, date, payment, location, optionalInfo } = req.body;
   const token = uuidv4();
+  const owner = await User.findOne({ where: { id: req.user.id } });
   try {
     const newGig = await Gig.create({
       ownerId: req.user.id,
@@ -20,6 +21,7 @@ router.post("/", validateSession, async (req, res) => {
       optionalInfo,
       token,
     });
+    await newGig.addUser(owner);
     res.status(200).json({ newGig, message: "success" });
   } catch (err) {
     res.status(500).json({ err, message: "failure" });
@@ -40,7 +42,9 @@ router.put("/:gigId", validateSession, async (req, res) => {
     res
       .status(200)
       .json({ success: true, message: "ENTRY_UPDATED", gig, result });
-  } catch (error) {}
+  } catch (error) {
+    res.status(500).json({ success: false, message: "ENTRY_NOT_FOUND", error });
+  }
 });
 
 //EDIT/ADD PROFILE TO USER ACCOUNT
@@ -208,8 +212,6 @@ router.post(
       const GigStack = new CallStackModel(callStack);
       const userAuth = parseInt(userId) === req.user.id;
       if (!userAuth) {
-        // if (false) {
-        //use this for testing, in reality we want userAuth so only logged-in user can accept the gig
         res
           .status(400)
           .json({ message: "You are not authorized to join this gig!" });
@@ -219,7 +221,7 @@ router.post(
           message: "You are not on call for this gig!",
         });
         return;
-      } else GigStack.setStackFilled(role);
+      } else GigStack.setStackFilled(role, user.name);
       GigStack.checkFilled();
       GigStack.filled
         ? await newEmail(gigOwner.email, 300, gigId, user.email, { role })
@@ -227,6 +229,7 @@ router.post(
 
       await Gig.addUserToGig(userId, gigId);
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
+      // await user.addGig(gig)
       await CallStack.update(GigStack, { where: { gigId } });
       res.status(200).json({ updatedStack: GigStack, message: "success" });
     } catch (err) {

@@ -60,11 +60,16 @@ module.exports = class CallStackModel {
    *   sets specific stack to filled, takes role as string
   sets current 'oncall' to 'confirmed' and removes 'oncall' key
    * @param {String} role to set as filled
+   * @param {String} name of the person accepting
    * @returns {String} confirmed call
    */
-  setStackFilled(role) {
+  setStackFilled(role, name) {
+    if(name){
+      this.stackTable[role].confirmed = {email: this.stackTable[role].onCall, name}
+    }else{
+      this.stackTable[role].confirmed = this.stackTable[role].onCall;
+    }
     this.stackTable[role].filled = true;
-    this.stackTable[role].confirmed = this.stackTable[role].onCall;
     this.stackTable[role].onCall = null;
     this.checkFilled();
     return this.stackTable[role].confirmed;

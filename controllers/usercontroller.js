@@ -1,5 +1,6 @@
 const express = require("express");
 const { User, Gig, CallStack, Notification } = require("../models");
+const CallStackModel = require("../models/CallStackModel");
 const { Op } = require("sequelize");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
@@ -75,17 +76,20 @@ router.post("/login", (req, res) => {
 router.put("/profile", validateSession, async (req, res) => {
   const { id } = req.user;
   try {
-    const user = await User.findOne({where: {id}, include: {model: Gig, include: {model: CallStack}}})
+    const user = await User.findOne({
+      where: { id },
+      include: { model: Gig, include: { model: CallStack } },
+    });
     if (!user) {
       res.status(403).json({ message: "Account not found" });
     } else {
-    const result = await user.update(req.body);
+      const result = await user.update(req.body);
       delete user.passwordhash;
       res.status(200).json({
         message: `success`,
         success: true,
         user,
-        result
+        result,
       });
     }
   } catch (err) {
@@ -137,13 +141,11 @@ router.post("/update-password", validateSession, async (req, res) => {
             await user.update({ passwordhash });
             res.status(200).json({ success: true });
           } else {
-            res
-              .status(502)
-              .json({
-                message: "🛑 Incorrect Password 🛑",
-                err,
-                success: false,
-              });
+            res.status(502).json({
+              message: "🛑 Incorrect Password 🛑",
+              err,
+              success: false,
+            });
           }
         })
       : res
@@ -156,8 +158,8 @@ router.post("/update-password", validateSession, async (req, res) => {
 
 //authorize a user
 router.get("/auth", validateSession, async (req, res) => {
-  const { id } = req.user;
   try {
+    const { id } = req.user;
     const user = await User.findOne({
       where: { id },
       // include: { all: true, nested: true },
@@ -168,10 +170,12 @@ router.get("/auth", validateSession, async (req, res) => {
     delete user.passwordhash;
     res
       .status(200)
-      .json({ auth: true, user: { ...user.dataValues, passwordhash: null },  });
+      .json({ auth: true, user: { ...user.dataValues, passwordhash: null } });
   } catch (err) {
     res.status(500).json({ err, auth: false });
   }
 });
+
+
 
 module.exports = router;
