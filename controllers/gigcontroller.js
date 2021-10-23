@@ -191,6 +191,78 @@ router.get("/:gigId", validateSession, async (req, res) => {
   }
 });
 
+//get gig details for multiple gigs
+router.post("/details", validateSession, async (req, res) => {
+  try {
+    console.log(req.body);
+    const { id } = req.user;
+    const gigIds = req.body;
+    // const hash = {};
+
+    const promises = gigIds.map(async (gigId) => {
+      const gig = await Gig.findOne({
+        where: { id: gigId },
+        include: { model: CallStack },
+      });
+      const GigStack = gig?.callStack ? new CallStackModel(gig.callStack) : null ;
+      const confirmed = GigStack ? GigStack?.returnConfirmed() : [];
+      const query = await Gig.getGigInfo(gigId);
+      if (query) {
+        confirmed.forEach((person) => {
+          if (!query.bandMembers.map((p) => p.email).includes(person.email)) {
+            query.bandMembers.push(person);
+          }
+        });
+        if (id !== query?.bandLeader?.id) {
+          delete query?.gig?.callStack;
+        }
+        return  [gigId, query]
+        // hash[gigId] = query;
+        // console.log(hash)
+      }
+    });
+    const arr=await Promise.all(promises)
+    const hash = arr.reduce((a,b)=>{
+      a[b[0]]=b[1]
+      return a
+    },{})
+    console.log(hash)
+
+
+
+    // await gigIds.forEach(async (gigId) => {
+    //   const gig = await Gig.findOne({
+    //     where: { id: gigId },
+    //     include: { model: CallStack },
+    //   });
+    //   const GigStack = new CallStackModel(gig.callStack);
+    //   const confirmed = gig.callStack ? GigStack.returnConfirmed() : [];
+    //   const query = await Gig.getGigInfo(gigId);
+
+    //   // console.log(query)
+    //   if (query) {
+    //     confirmed.forEach((person) => {
+    //       if (!query.bandMembers.map((p) => p.email).includes(person.email)) {
+    //         query.bandMembers.push(person);
+    //       }
+    //     });
+    //     if (id !== query.bandLeader.id) {
+    //       delete query.gig.callStack;
+    //     }
+
+    //     hash[gigId] = query;
+    //     console.log(hash)
+    //   }
+    //   // console.log(gigId)
+    // });
+    // console.log(hash)
+    res.status(200).json(hash);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ error });
+  }
+});
+
 //ACCEPT A GIG OFFER
 router.post(
   "/:gigId/addUser/:userId/:role",

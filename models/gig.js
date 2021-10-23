@@ -84,7 +84,7 @@ Gig.getGigInfo = async (gigId) => {
 
     // console.log(posts)
     if (gig) {
-      console.log('*** *** *** ** ** * ** * * ',gig)
+      // console.log('*** *** *** ** ** * ** * * ',gig)
       const response = {
         gig: {
           description: gig.description,
@@ -103,7 +103,7 @@ Gig.getGigInfo = async (gigId) => {
 
       //find all users that have an account
       const users = await gig.getUsers({});
-      console.log('🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥', users)
+      // console.log('🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥', users)
       
       const roleHash = callStack
         ? new CallStackModel(callStack)?.returnConfirmed().reduce((a, b) => {
