@@ -22,7 +22,7 @@ router.post("/", validateSession, async (req, res) => {
       token,
     });
     await newGig.addUser(owner);
-    res.status(200).json({ newGig, message: "success" });
+    res.status(200).json({ newGig, message: "success", success: true });
   } catch (err) {
     res.status(500).json({ err, message: "failure" });
   }
@@ -33,7 +33,10 @@ router.put("/:gigId", validateSession, async (req, res) => {
   try {
     const { gigId } = req.params;
     const ownerId = req.user?.id;
-    const gig = await Gig.findOne({ where: { id: gigId, ownerId } });
+    const gig = await Gig.findOne({
+      where: { id: gigId, ownerId },
+      include: { model: CallStack },
+    });
     if (!gig) {
       res.status(500).json({ success: false, message: "ENTRY_NOT_FOUND" });
       return;
@@ -204,7 +207,9 @@ router.post("/details", validateSession, async (req, res) => {
         where: { id: gigId },
         include: { model: CallStack },
       });
-      const GigStack = gig?.callStack ? new CallStackModel(gig.callStack) : null ;
+      const GigStack = gig?.callStack
+        ? new CallStackModel(gig.callStack)
+        : null;
       const confirmed = GigStack ? GigStack?.returnConfirmed() : [];
       const query = await Gig.getGigInfo(gigId);
       if (query) {
@@ -216,19 +221,17 @@ router.post("/details", validateSession, async (req, res) => {
         if (id !== query?.bandLeader?.id) {
           delete query?.gig?.callStack;
         }
-        return  [gigId, query]
+        return [gigId, query];
         // hash[gigId] = query;
         // console.log(hash)
       }
     });
-    const arr=await Promise.all(promises)
-    const hash = arr.reduce((a,b)=>{
-      a[b[0]]=b[1]
-      return a
-    },{})
-    console.log(hash)
-
-
+    const arr = await Promise.all(promises);
+    const hash = arr.reduce((a, b) => {
+      a[b[0]] = b[1];
+      return a;
+    }, {});
+    console.log(hash);
 
     // await gigIds.forEach(async (gigId) => {
     //   const gig = await Gig.findOne({
@@ -258,7 +261,7 @@ router.post("/details", validateSession, async (req, res) => {
     // console.log(hash)
     res.status(200).json(hash);
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({ error });
   }
 });
