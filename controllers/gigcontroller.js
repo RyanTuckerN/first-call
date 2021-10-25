@@ -231,7 +231,7 @@ router.post("/details", validateSession, async (req, res) => {
       a[b[0]] = b[1];
       return a;
     }, {});
-    console.log(hash);
+    // console.log(hash);
 
     // await gigIds.forEach(async (gigId) => {
     //   const gig = await Gig.findOne({
@@ -268,7 +268,7 @@ router.post("/details", validateSession, async (req, res) => {
 
 //ACCEPT A GIG OFFER
 router.post(
-  "/:gigId/addUser/:userId/:role",
+  "/:gigId/accept/:userId/:role",
   validateSession,
   async (req, res) => {
     const { userId, gigId, role } = req.params;
@@ -306,7 +306,7 @@ router.post(
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
       // await user.addGig(gig)
       await CallStack.update(GigStack, { where: { gigId } });
-      res.status(200).json({ updatedStack: GigStack, message: "success" });
+      res.status(200).json({ updatedStack: GigStack, message: "success", success: true, gig });
     } catch (err) {
       res.status(500).json({ err, message: "failure" });
     }
@@ -353,7 +353,7 @@ router.post(
 
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
-      res.status(200).json({ updatedStack: GigStack, message: "success" });
+      res.status(200).json({ updatedStack: GigStack, message: "success", success: true, gig });
     } catch (err) {
       res.status(500).json({ err, message: "failure" });
     }

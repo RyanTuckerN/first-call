@@ -9,13 +9,13 @@ const postOrganizer = require("../helpers/postOrganizer");
 //  -AUTHENTICATION BASED ON req.user.id
 
 //new post
-router.post("/:gigId/newPost/:childOf?", async (req, res) => {
+router.post("/:gigId/newPost/:childOf?", validateSession, async (req, res) => {
   try {
     const { gigId, childOf } = req.params;
     const { text } = req.body;
 
-    // const userId = req.user.id
-    const userId = 3;
+    const userId = req.user.id
+    // const userId = 3;
 
     const parentPost = childOf
       ? await Post.findOne({ where: { id: childOf } })
@@ -29,9 +29,10 @@ router.post("/:gigId/newPost/:childOf?", async (req, res) => {
       gigId: parseInt(gigId),
     };
 
-    const newPost = await Post.create(post);
+    const newPost = await Post.create(post, {include: {model: User}});
+    const user = await newPost.getUser()
 
-    res.status(200).json({ newPost });
+    res.status(200).json({ post: newPost, user });
   } catch (err) {
     res.status(500).json({ err });
   }
@@ -44,7 +45,7 @@ router.post("/:gigId/post/:postId/upvote", async (req, res) => {
   const userId = 1;
 
   try {
-    const post = await Post.findOne({ where: { id: postId, gigId } });
+    const post = await Post.findOne({ where: { id: postId, gigId }, include: {model: User} });
     if (!post) {
       res
         .status(403)
@@ -69,20 +70,20 @@ router.post("/:gigId/post/:postId/upvote", async (req, res) => {
     //persist the changes
     const updatedPost = await post.save();
 
-    res.status(200).json({ updatedPost });
+    res.status(200).json({ post: updatedPost, success: true, add:'upvote'});
   } catch (err) {
     res.status(500).json({ err });
   }
 });
 
 //remove an upvote
-router.post("/:gigId/post/:postId/removeUpvote", async (req, res) => {
+router.post("/:gigId/post/:postId/removeUpvote", validateSession,  async (req, res) => {
   const { gigId, postId } = req.params;
-  // const userId = req.user.id
-  const userId = 221;
+  const userId = req.user.id
+  // const userId = req.;
 
   try {
-    const post = await Post.findOne({ where: { id: postId, gigId } });
+    const post = await Post.findOne({ where: { id: postId, gigId }, include: {model: User} });
     if (!post) {
       res
         .status(403)
@@ -94,7 +95,7 @@ router.post("/:gigId/post/:postId/removeUpvote", async (req, res) => {
     }
 
     const upvotes = await post.removeUpvote(userId);
-    //
+    
     if (upvotes === -1) {
       res.status(400).json({ message: "You haven't voted on this yet!" });
       return;
@@ -106,7 +107,7 @@ router.post("/:gigId/post/:postId/removeUpvote", async (req, res) => {
     //persist the changes
     const updatedPost = await post.save();
 
-    res.status(200).json({ updatedPost });
+    res.status(200).json({ success: true, post: updatedPost, remove: 'upvote' });
   } catch (err) {
     res.status(500).json({ err });
   }
@@ -241,8 +242,8 @@ router.get("/:gigId", async (req, res) => {
       res.status(403).json({ message: "not authorized!" });
       return;
     }
-    const response = postOrganizer(gig.posts);
-    res.status(200).json(response);
+    // const response = postOrganizer(gig.posts);
+    res.status(200).json({posts: gig.posts, success: true});
   } catch (err) {
     res.status(500).json({ err });
   }
