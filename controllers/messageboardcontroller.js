@@ -14,7 +14,7 @@ router.post("/:gigId/newPost/:childOf?", validateSession, async (req, res) => {
     const { gigId, childOf } = req.params;
     const { text } = req.body;
 
-    const userId = req.user.id
+    const userId = req.user.id;
     // const userId = 3;
 
     const parentPost = childOf
@@ -29,8 +29,8 @@ router.post("/:gigId/newPost/:childOf?", validateSession, async (req, res) => {
       gigId: parseInt(gigId),
     };
 
-    const newPost = await Post.create(post, {include: {model: User}});
-    const user = await newPost.getUser()
+    const newPost = await Post.create(post, { include: { model: User } });
+    const user = await newPost.getUser();
 
     res.status(200).json({ post: newPost, user });
   } catch (err) {
@@ -39,90 +39,105 @@ router.post("/:gigId/newPost/:childOf?", validateSession, async (req, res) => {
 });
 
 //upvvote a post
-router.post("/:gigId/post/:postId/upvote", async (req, res) => {
-  const { gigId, postId } = req.params;
-  // const userId = req.user.id
-  const userId = 1;
+router.post(
+  "/:gigId/post/:postId/upvote",
+  validateSession,
+  async (req, res) => {
+    const { gigId, postId } = req.params;
+    const userId = req.user.id;
+    // const userId = 1;
+    try {
+      const post = await Post.findOne({
+        where: { id: postId, gigId },
+        include: { model: User },
+      });
+      if (!post) {
+        res
+          .status(403)
+          .json({ message: `You must have gotten here on accident!` });
+        console.log(
+          `🔥 Post does not exist at upvote a post, messageboardcontroller.js`
+        );
+        return;
+      }
 
-  try {
-    const post = await Post.findOne({ where: { id: postId, gigId }, include: {model: User} });
-    if (!post) {
-      res
-        .status(403)
-        .json({ message: `You must have gotten here on accident!` });
-      console.log(
-        `🔥 Post does not exist at upvote a post, messageboardcontroller.js`
-      );
-      return;
+      const upvotes = await post.addUpvote(userId);
+
+      //
+      if (upvotes === -1) {
+        res.status(400).json({ message: "You can only upvote once!" });
+        return;
+      }
+
+      //update the array 'voters'
+      await Post.update({ voters: post.voters }, { where: { id: postId } });
+
+      //persist the changes
+      const updatedPost = await post.save();
+
+      res.status(200).json({ post: updatedPost, success: true, add: "upvote" });
+    } catch (err) {
+      res.status(500).json({ err });
     }
-
-    const upvotes = await post.addUpvote(userId);
-
-    //
-    if (upvotes === -1) {
-      res.status(400).json({ message: "You can only upvote once!" });
-      return;
-    }
-
-    //update the array 'voters'
-    await Post.update({ voters: post.voters }, { where: { id: postId } });
-
-    //persist the changes
-    const updatedPost = await post.save();
-
-    res.status(200).json({ post: updatedPost, success: true, add:'upvote'});
-  } catch (err) {
-    res.status(500).json({ err });
   }
-});
+);
 
 //remove an upvote
-router.post("/:gigId/post/:postId/removeUpvote", validateSession,  async (req, res) => {
-  const { gigId, postId } = req.params;
-  const userId = req.user.id
-  // const userId = req.;
+router.post(
+  "/:gigId/post/:postId/removeUpvote",
+  validateSession,
+  async (req, res) => {
+    const { gigId, postId } = req.params;
+    const userId = req.user.id;
+    // const userId = req.;
 
-  try {
-    const post = await Post.findOne({ where: { id: postId, gigId }, include: {model: User} });
-    if (!post) {
+    try {
+      const post = await Post.findOne({
+        where: { id: postId, gigId },
+        include: { model: User },
+      });
+      if (!post) {
+        res
+          .status(403)
+          .json({ message: `You must have gotten here on accident!` });
+        console.log(
+          `🔥 Post does not exist at remove upvote, messageboardcontroller.js`
+        );
+        return;
+      }
+
+      const upvotes = await post.removeUpvote(userId);
+
+      if (upvotes === -1) {
+        res.status(400).json({ message: "You haven't voted on this yet!" });
+        return;
+      }
+
+      //update the array 'voters'
+      await Post.update({ voters: post.voters }, { where: { id: postId } });
+
+      //persist the changes
+      const updatedPost = await post.save();
+
       res
-        .status(403)
-        .json({ message: `You must have gotten here on accident!` });
-      console.log(
-        `🔥 Post does not exist at remove upvote, messageboardcontroller.js`
-      );
-      return;
+        .status(200)
+        .json({ success: true, post: updatedPost, remove: "upvote" });
+    } catch (err) {
+      res.status(500).json({ err });
     }
-
-    const upvotes = await post.removeUpvote(userId);
-    
-    if (upvotes === -1) {
-      res.status(400).json({ message: "You haven't voted on this yet!" });
-      return;
-    }
-
-    //update the array 'voters'
-    await Post.update({ voters: post.voters }, { where: { id: postId } });
-
-    //persist the changes
-    const updatedPost = await post.save();
-
-    res.status(200).json({ success: true, post: updatedPost, remove: 'upvote' });
-  } catch (err) {
-    res.status(500).json({ err });
   }
-});
+);
 
 //edit text of post
-router.put("/:gigId/post/:postId/edit", async (req, res) => {
+router.put("/:gigId/post/:postId/edit", validateSession, async (req, res) => {
   const { gigId, postId } = req.params;
   const { text } = req.body;
-  // const userId = req.user.id
-  const userId = 3;
+  const userId = req.user.id;
+  // const userId = 3;
 
   try {
     const post = await Post.findOne({
-      where: { id: postId, gigId, author: userId },
+      where: { id: postId, gigId, author: userId }, include: {model: User}
     });
     if (!post || post.details.deleted) {
       res
@@ -153,7 +168,7 @@ router.put("/:gigId/post/:postId/edit", async (req, res) => {
             : [{ editedAt: new Date(), originalText: post.text }],
         },
       },
-      { where: { id: postId }, returning: true }
+      { where: { id: postId }, returning: true, include: {model: User} }
     );
 
     //if update sucessful, send as response, otherwise send null
@@ -162,88 +177,94 @@ router.put("/:gigId/post/:postId/edit", async (req, res) => {
     //persist the changes
     // const updatedPost = await post.save();
 
-    res.status(200).json({ updatedPost });
+    res.status(200).json({ post :updatedPost[0], success: true });
   } catch (err) {
     res.status(500).json({ err });
   }
 });
 
 //"delete" a post
-router.post("/:gigId/post/:postId/delete", async (req, res) => {
-  const { gigId, postId } = req.params;
-  // const userId = req.user.id
-  const userId = 3;
+router.post(
+  "/:gigId/post/:postId/delete",
+  validateSession,
+  async (req, res) => {
+    const { gigId, postId } = req.params;
+    const userId = req.user.id;
+    // const userId = 3;
 
-  try {
-    const post = await Post.findOne({
-      where: { id: postId, gigId, author: userId },
-    });
-    if (!post) {
-      res
-        .status(403)
-        .json({ message: `You must have gotten here on accident!` });
-      console.log(
-        `🔥 Post does not exist at "delete" post, messageboardcontroller.js`
-      );
-      return;
-    } else if (post.details.deleted) {
-      res.status(403).json({ message: `This post has already been deleted!` });
-      return;
-    }
+    try {
+      const post = await Post.findOne({
+        where: { id: postId, gigId, author: userId },
+      });
+      if (!post) {
+        res
+          .status(403)
+          .json({ message: `You must have gotten here on accident!` });
+        console.log(
+          `🔥 Post does not exist at "delete" post, messageboardcontroller.js`
+        );
+        return;
+      } else if (post.details.deleted) {
+        res
+          .status(403)
+          .json({ message: `This post has already been deleted!` });
+        return;
+      }
 
-    //update the text and author, add details of deletion
-    const update = await Post.update(
-      {
-        text: "deleted",
-        author: userId,
-        details: {
-          ...post.details,
-          deleted: true,
-          deletedAt: new Date(),
-          originalText: post.text,
+      //update the text and author, add details of deletion
+      const update = await Post.update(
+        {
+          text: "deleted",
+          author: userId,
+          details: {
+            ...post.details,
+            deleted: true,
+            deletedAt: new Date(),
+            originalText: post.text,
+          },
         },
-      },
-      { where: { id: postId }, returning: true }
-    );
+        { where: { id: postId }, returning: true }
+      );
 
-    //if update sucessful, send as response, otherwise send null
-    const updatedPost = update.length === 2 ? update[1] : null;
+      //if update sucessful, send as response, otherwise send null
+      const updatedPost = update.length === 2 ? update[1] : null;
 
-    //persist the changes
-    // const updatedPost = await post.save();
+      //persist the changes
+      // const updatedPost = await post.save();
 
-    res.status(200).json({ updatedPost });
-  } catch (err) {
-    res.status(500).json({ err });
+      res.status(200).json({ updatedPost });
+    } catch (err) {
+      res.status(500).json({ err });
+    }
   }
-});
+);
 
 //get all posts by gigId
-router.get("/:gigId", async (req, res) => {
+router.get("/:gigId", validateSession, async (req, res) => {
   try {
     const { gigId } = req.params;
-    // const { id } = req.user
-    const id = 1;
+    const { id } = req.user;
+    // const id = 1;
 
     const gig = await Gig.findOne({
       where: { id: gigId },
       include: [
         {
-          model: Post, 
+          model: Post,
           // attributes: ['id', 'childOf', 'text'],
           include: { model: User, attributes: ["name", "email"] },
         },
       ],
     });
-    const users = await gig.getUsers();
+    // const users = await gig.getUsers();
 
-    //if user is not on the gig
-    if (!users.map((u) => u.id).includes(id)) {
-      res.status(403).json({ message: "not authorized!" });
-      return;
-    }
+    // //if user is not on the gig
+    // if (!users.map((u) => u.id).includes(id)) {
+    //   res.status(403).json({ message: "not authorized!" });
+    //   return;
+    // }
     // const response = postOrganizer(gig.posts);
-    res.status(200).json({posts: gig.posts, success: true});
+    res.status(200).json({ posts: gig.posts, success: true });
   } catch (err) {
     res.status(500).json({ err });
   }
