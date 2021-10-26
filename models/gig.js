@@ -58,6 +58,7 @@ Gig.addUserToGig = async (userId, gigId) => {
       }
     }
 
+    // await gig.addUser(user)
     console.log('ADD USER TO GIG RESPONSE: ', response)
     return response;
   } catch (err) {

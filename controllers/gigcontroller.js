@@ -50,31 +50,7 @@ router.put("/:gigId", validateSession, async (req, res) => {
   }
 });
 
-//EDIT/ADD PROFILE TO USER ACCOUNT
-router.put("/profile", validateSession, async (req, res) => {
-  const { id } = req.user;
-  try {
-    const user = await User.findOne({
-      where: { id },
-      include: { model: Gig, include: { model: CallStack } },
-    });
-    if (!user) {
-      res.status(403).json({ message: "Account not found" });
-      return;
-    } else {
-      const result = await user.update(req.body);
-      delete user.passwordhash;
-      res.status(200).json({
-        message: `success`,
-        success: true,
-        user,
-        result,
-      });
-    }
-  } catch (err) {
-    res.status(500).json({ message: "Oops, something went wrong!", err });
-  }
-});
+
 
 //CREATE A CALLSTACK OBJ FOR YOUR GIG.
 //CALLSTACK REQUEST SHOULD BE JSON OBJ 'stackTable' WITH A KEY REPRESENTING EACH INTSTRUMENT
@@ -231,34 +207,7 @@ router.post("/details", validateSession, async (req, res) => {
       a[b[0]] = b[1];
       return a;
     }, {});
-    // console.log(hash);
 
-    // await gigIds.forEach(async (gigId) => {
-    //   const gig = await Gig.findOne({
-    //     where: { id: gigId },
-    //     include: { model: CallStack },
-    //   });
-    //   const GigStack = new CallStackModel(gig.callStack);
-    //   const confirmed = gig.callStack ? GigStack.returnConfirmed() : [];
-    //   const query = await Gig.getGigInfo(gigId);
-
-    //   // console.log(query)
-    //   if (query) {
-    //     confirmed.forEach((person) => {
-    //       if (!query.bandMembers.map((p) => p.email).includes(person.email)) {
-    //         query.bandMembers.push(person);
-    //       }
-    //     });
-    //     if (id !== query.bandLeader.id) {
-    //       delete query.gig.callStack;
-    //     }
-
-    //     hash[gigId] = query;
-    //     console.log(hash)
-    //   }
-    //   // console.log(gigId)
-    // });
-    // console.log(hash)
     res.status(200).json(hash);
   } catch (error) {
     console.log(error);
@@ -401,7 +350,7 @@ router.post(
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
 
-      res.status(200).json({ message: `success`, updatedCallStack: GigStack });
+      res.status(200).json({ message: `success`, callStack: GigStack.stackTable, success:true });
     } catch (err) {
       res.status(500).json({ message: `Something has gone wrong!` });
     }
@@ -451,27 +400,27 @@ router.post(
       GigStack.setGigNotFilled();
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
-      res.status(200).json({ roleStack, message: "success" });
+      res.status(200).json({ roleStack, message: "success", success:true });
     } catch (err) {
       res.status(500).json({ err, message: "failure" });
     }
   }
 );
 
-router.get("/test/test", async (req, res) => {
-  try {
-    const query = await User.findAndCountAll({
-      include: { all: true, nested: true },
-    });
-    // await User.findOne({
-    // where: { gigId: 1 },
-    // include: [{ model: User }, { model: CallStack }],
-    // });
-    res.status(200).json({ query, message: "success" });
-  } catch (err) {
-    res.status(500).json({ err, message: "failure" });
-  }
-});
+// router.get("/test/test", async (req, res) => {
+//   try {
+//     const query = await User.findAndCountAll({
+//       include: { all: true, nested: true },
+//     });
+//     // await User.findOne({
+//     // where: { gigId: 1 },
+//     // include: [{ model: User }, { model: CallStack }],
+//     // });
+//     res.status(200).json({ query, message: "success" });
+//   } catch (err) {
+//     res.status(500).json({ err, message: "failure" });
+//   }
+// });
 
 //get array of users associated with gig, bandleader is always position 0
 router.get("/:gigId/users", validateSession, async (req, res) => {
