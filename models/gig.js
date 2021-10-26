@@ -40,8 +40,8 @@ Gig.addUserToGig = async (userId, gigId) => {
     const user = await sequelize.models.user.findOne({ where: { id: userId } });
     const gig = await Gig.findOne({ where: { id: gigId } });
 
-    console.log(user.name)
-    console.log(gig.description)
+    // console.log(user.name)
+    // console.log(gig.description)
 
     let response = { errors: [] };
     if (!user) response.errors.push(`User ${userId} doesn't exist!`);

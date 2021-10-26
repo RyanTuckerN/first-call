@@ -30,9 +30,13 @@ router.post("/signup", (req, res) => {
         },
         message: `Success! Account created for ${name}!`,
         sessionToken: token,
+        success: true,
       });
     })
-    .catch((err) => res.status(500).json({ error: err }));
+    .catch((err) => {
+      res.status(500).json({ error: err });
+      console.log(err);
+    });
 });
 
 //LOGIN EXISTING USER
@@ -46,7 +50,7 @@ router.post("/login", (req, res) => {
     // attributes: { include: ["passwordhash"] },
   })
     .then((user) => {
-      console.log(user);
+      // console.log(user);
       if (user) {
         bcrypt.compare(password, user.passwordhash, (err, match) => {
           if (match) {
@@ -57,6 +61,7 @@ router.post("/login", (req, res) => {
             res.status(200).json({
               user,
               message: `Success! ${user.name} logged in!`,
+              success: true,
               sessionToken: token,
             });
           } else {
@@ -93,6 +98,7 @@ router.put("/profile", validateSession, async (req, res) => {
       });
     }
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Oops, something went wrong!", err });
   }
 });
@@ -109,7 +115,7 @@ router.get("/offers", validateSession, async (req, res) => {
     res.status(200).json({ offers, message: "success!", success: true });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ err, message: "failure", success: false });
+    res.status(500).json({ err, message: "failure" });
   }
 });
 
@@ -117,10 +123,31 @@ router.get("/offers", validateSession, async (req, res) => {
 router.get("/notifications", validateSession, async (req, res) => {
   const { id } = req.user;
   try {
+    const user = await User.findOne({ where: { id } });
+    const offers = await Gig.findAll({
+      where: { openCalls: { [Op.contains]: [user.email] } },
+      include: [{ model: CallStack }, { model: User }],
+    });
+
+    const mappedOffers = offers.map((o) => o.id);
+
     const notifications = await Notification.findAll({
       where: { userId: id },
     });
-    res.status(200).json({ auth: true, notifications, message: "success!" });
+
+    const filteredNotes = notifications.filter((n) => {
+      if (n.details.code !== 100) return n;
+      if (mappedOffers.includes(n.details.gigId)) return n;
+    });
+    console.log("filtered: ", filteredNotes);
+    console.log("Notifications!!!: ", notifications);
+
+    res.status(200).json({
+      auth: true,
+      notifications: filteredNotes,
+      message: "success!",
+      success: true,
+    });
   } catch (err) {
     console.log(err),
       res.status(500).json({ err, message: "failure", auth: false });
@@ -148,11 +175,10 @@ router.post("/update-password", validateSession, async (req, res) => {
             });
           }
         })
-      : res
-          .status(500)
-          .json({ message: "something went wrong!", success: false });
+      : res.status(500).json({ message: "something went wrong!" });
   } catch (err) {
-    res.status(500).send({ message: "failure", err, success: false });
+    console.log(err);
+    res.status(500).json({ message: "failure", err });
   }
 });
 
@@ -168,22 +194,25 @@ router.get("/auth", validateSession, async (req, res) => {
     // const gigs = await user.getGigs()
 
     delete user.passwordhash;
-    res
-      .status(200)
-      .json({ auth: true, user: { ...user.dataValues, passwordhash: null } });
+    res.status(200).json({
+      auth: true,
+      user: { ...user.dataValues, passwordhash: null, success: true },
+    });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ err, auth: false });
   }
 });
 
-router.get('/profile/:id', validateSession, async(req,res)=>{
-  const {id} = req.params
+router.get("/profile/:id", validateSession, async (req, res) => {
+  const { id } = req.params;
   try {
-    const user= await User.findOne({where: {id}})
-    res.status(200).json({user, success: true, message: 'success!'})
+    const user = await User.findOne({ where: { id } });
+    res.status(200).json({ user, success: true, message: "success!" });
   } catch (error) {
-    res.status(500).json({error})
+    console.log(err);
+    res.status(500).json({ error });
   }
-})
+});
 
 module.exports = router;

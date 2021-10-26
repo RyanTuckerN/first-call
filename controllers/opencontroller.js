@@ -24,13 +24,10 @@ router.post("/:gigId/addUser/:email/:role/:token", async (req, res) => {
     const GigStack = new CallStackModel(callStack);
 
     const onCall = GigStack?.stackTable[role]?.onCall;
-    console.log(onCall);
-    // console.log(onCall);
     bcrypt.compare(
       onCall,
       email.replace(/slash/g, "/"),
       async (err, success) => {
-        // console.log(err, success);
         if (err) {
           res.status(500).json({
             err,
@@ -41,7 +38,6 @@ router.post("/:gigId/addUser/:email/:role/:token", async (req, res) => {
             ? await newEmail(gigOwner.email, 300, gigId, onCall, { role })
             : await newEmail(gigOwner.email, 201, gigId, onCall, { role });
 
-          // await Gig.addUserToGig(userId, gigId);
           await CallStack.update(GigStack, { where: { gigId } });
           await gig.update({ openCalls: GigStack.returnOpenCalls() });
           res.status(200).json({  message: "success!", success: true });
@@ -54,6 +50,7 @@ router.post("/:gigId/addUser/:email/:role/:token", async (req, res) => {
       }
     );
   } catch (err) {
+    console.log(err)
     res.status(500).json({ err, message: "failure!" });
   }
 });
@@ -110,6 +107,7 @@ router.post("/:gigId/decline/:email/:role/:token", async (req, res) => {
       }
     );
   } catch (err) {
+    console.log(err)
     res.status(500).json({ err, message: "failure" });
   }
 });

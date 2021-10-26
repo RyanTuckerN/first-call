@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { Gig, User, CallStack } = require("../models");
+const { Gig, User, CallStack, Post } = require("../models");
 const CallStackModel = require("../models/CallStackModel");
 const newEmail = require("../helpers/newEmail");
 const validateSession = require("../middleware/validateSession");
 const { v4: uuidv4 } = require("uuid");
+const ERR = "Something went wrong!";
+const SUC = "Success!";
 
 //CREATE A GIG
 router.post("/", validateSession, async (req, res) => {
@@ -22,8 +24,9 @@ router.post("/", validateSession, async (req, res) => {
       token,
     });
     await newGig.addUser(owner);
-    res.status(200).json({ newGig, message: "success", success: true });
+    res.status(200).json({ newGig, message: SUC, success: true });
   } catch (err) {
+    console.log(err);
     res.status(500).json({ err, message: "failure" });
   }
 });
@@ -38,19 +41,18 @@ router.put("/:gigId", validateSession, async (req, res) => {
       include: { model: CallStack },
     });
     if (!gig) {
-      res.status(500).json({ success: false, message: "ENTRY_NOT_FOUND" });
+      res.status(500).json({ message: "Gig not found" });
       return;
     }
     const result = await gig.update(req.body);
     res
       .status(200)
-      .json({ success: true, message: "ENTRY_UPDATED", gig, result });
+      .json({ success: true, message: "Gig updated", gig, result });
   } catch (error) {
-    res.status(500).json({ success: false, message: "ENTRY_NOT_FOUND", error });
+    console.log(error);
+    res.status(500).json({ success: false, message: ERR, error });
   }
 });
-
-
 
 //CREATE A CALLSTACK OBJ FOR YOUR GIG.
 //CALLSTACK REQUEST SHOULD BE JSON OBJ 'stackTable' WITH A KEY REPRESENTING EACH INTSTRUMENT
@@ -78,7 +80,6 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     }
     const gig = await Gig.findOne({ where: { id: gigId } });
     const gigOwner = await User.findOne({ where: { id: gig?.ownerId } });
-
     if (gig.ownerId != req.user.id) {
       res.status(403).json({ message: "Not Authorized!" });
       return;
@@ -112,7 +113,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
 
     const GigStack = new CallStackModel(callStack);
     await gig.update({ openCalls: GigStack.returnOpenCalls() });
-    res.status(200).json({ message: "Success!", callStack });
+    res.status(200).json({ message: "Success!", callStack, success: true });
   } catch (err) {
     if (err?.name === "SequelizeUniqueConstraintError") {
       res
@@ -120,7 +121,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
         .json({ message: `Callstack already exists for gig ${gigId}.` });
       return;
     }
-    res.status(500).json({ err, message: "failure" });
+    res.status(500).json({ err, message: ERR });
     console.error(err);
   }
 });
@@ -173,10 +174,8 @@ router.get("/:gigId", validateSession, async (req, res) => {
 //get gig details for multiple gigs
 router.post("/details", validateSession, async (req, res) => {
   try {
-    console.log(req.body);
     const { id } = req.user;
     const gigIds = req.body;
-    // const hash = {};
 
     const promises = gigIds.map(async (gigId) => {
       const gig = await Gig.findOne({
@@ -198,8 +197,6 @@ router.post("/details", validateSession, async (req, res) => {
           delete query?.gig?.callStack;
         }
         return [gigId, query];
-        // hash[gigId] = query;
-        // console.log(hash)
       }
     });
     const arr = await Promise.all(promises);
@@ -208,7 +205,7 @@ router.post("/details", validateSession, async (req, res) => {
       return a;
     }, {});
 
-    res.status(200).json(hash);
+    res.status(200).json({ hash, success: true });
   } catch (error) {
     console.log(error);
     res.status(500).json({ error });
@@ -221,15 +218,13 @@ router.post(
   validateSession,
   async (req, res) => {
     const { userId, gigId, role } = req.params;
-
     try {
       const gig = await Gig.findOne({
         where: { id: gigId },
-        include: { all: true, nested: true },
+        include: [{ model: CallStack }, { model: User }, {model: Post}],
       });
       const callStack = gig.callStack;
       const gigOwner = gig.user;
-      // console.log(callStack ?? 'no callstack', gigOwner ?? 'no gigowner')
       const user = await User.findOne({ where: { id: userId } });
 
       //converts callStack to CallStack instance, with methods included
@@ -255,7 +250,13 @@ router.post(
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
       // await user.addGig(gig)
       await CallStack.update(GigStack, { where: { gigId } });
-      res.status(200).json({ updatedStack: GigStack, message: "success", success: true, gig });
+
+      res.status(200).json({
+        updatedStack: GigStack,
+        message: "success",
+        success: true,
+        gig,
+      });
     } catch (err) {
       res.status(500).json({ err, message: "failure" });
     }
@@ -272,7 +273,7 @@ router.post(
     try {
       const gig = await Gig.findOne({
         where: { id: gigId },
-        include: { all: true, nested: true },
+        include: [{ model: CallStack }, {model: User}],
       });
       const callStack = gig.callStack;
       const gigOwner = gig.user;
@@ -302,7 +303,12 @@ router.post(
 
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
-      res.status(200).json({ updatedStack: GigStack, message: "success", success: true, gig });
+      res.status(200).json({
+        // updatedStack: GigStack,
+        message: "success",
+        success: true,
+        gig,
+      });
     } catch (err) {
       res.status(500).json({ err, message: "failure" });
     }
@@ -350,7 +356,11 @@ router.post(
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
 
-      res.status(200).json({ message: `success`, callStack: GigStack.stackTable, success:true });
+      res.status(200).json({
+        message: `success`,
+        callStack: GigStack.stackTable,
+        success: true,
+      });
     } catch (err) {
       res.status(500).json({ message: `Something has gone wrong!` });
     }
@@ -400,7 +410,7 @@ router.post(
       GigStack.setGigNotFilled();
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
-      res.status(200).json({ roleStack, message: "success", success:true });
+      res.status(200).json({ roleStack, message: "success", success: true });
     } catch (err) {
       res.status(500).json({ err, message: "failure" });
     }
