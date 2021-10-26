@@ -176,6 +176,14 @@ router.get("/auth", validateSession, async (req, res) => {
   }
 });
 
-
+router.get('/profile/:id', validateSession, async(req,res)=>{
+  const {id} = req.params
+  try {
+    const user= await User.findOne({where: {id}})
+    res.status(200).json({user, success: true, message: 'success!'})
+  } catch (error) {
+    res.status(500).json({error})
+  }
+})
 
 module.exports = router;
