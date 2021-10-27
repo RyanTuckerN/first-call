@@ -10,7 +10,7 @@ const SUC = "Success!";
 
 //CREATE A GIG
 router.post("/", validateSession, async (req, res) => {
-  const { description, date, payment, location, optionalInfo } = req.body;
+  const { description, date, payment, gigLocation, optionalInfo, photo } = req.body;
   const token = uuidv4();
   const owner = await User.findOne({ where: { id: req.user.id } });
   try {
@@ -19,8 +19,9 @@ router.post("/", validateSession, async (req, res) => {
       description,
       date,
       payment,
-      location,
+      gigLocation,
       optionalInfo,
+      photo,
       token,
     });
     await newGig.addUser(owner);
@@ -86,12 +87,12 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     }
 
     const callStack = await CallStack.newStackTable(stackTable, gigId);
-    if (!callStack.stackTable.bandLeader) {
-      callStack.stackTable.bandLeader = {
-        confirmed: gigOwner.email,
-        filled: true,
-      };
-    }
+    // if (!callStack.stackTable.bandLeader) {
+    //   callStack.stackTable.bandLeader = {
+    //     confirmed: gigOwner.email,
+    //     filled: true,
+    //   };
+    // }
     await Gig.addUserToGig(gig.ownerId, gig.id);
 
     /*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
@@ -113,7 +114,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
 
     const GigStack = new CallStackModel(callStack);
     await gig.update({ openCalls: GigStack.returnOpenCalls() });
-    res.status(200).json({ message: "Success!", callStack, success: true });
+    res.status(200).json({ message: "Success!", callStack, success: true, gig });
   } catch (err) {
     if (err?.name === "SequelizeUniqueConstraintError") {
       res
@@ -221,7 +222,7 @@ router.post(
     try {
       const gig = await Gig.findOne({
         where: { id: gigId },
-        include: [{ model: CallStack }, { model: User }, {model: Post}],
+        include: [{ model: CallStack }, { model: User }, { model: Post }],
       });
       const callStack = gig.callStack;
       const gigOwner = gig.user;
@@ -273,7 +274,7 @@ router.post(
     try {
       const gig = await Gig.findOne({
         where: { id: gigId },
-        include: [{ model: CallStack }, {model: User}],
+        include: [{ model: CallStack }, { model: User }],
       });
       const callStack = gig.callStack;
       const gigOwner = gig.user;
@@ -397,12 +398,11 @@ router.post(
       }
 
       const roleStack = GigStack.addRoleToStackTable(role, calls);
-      const firstCall =
-        typeof calls === "string"
-          ? calls
-          : Array.isArray(calls)
-          ? calls[0]
-          : null;
+
+      const firstCall = typeof calls === "string" ? calls : Array.isArray(calls) ? calls[0] : null;
+
+           
+          console.log('FIRST CALL: ⛳⛳⛳⛳⛳⛳⛳,' , firstCall)
 
       if (roleStack.onCall === firstCall && firstCall !== null) {
         await newEmail(roleStack.onCall, 100, gigId, gigOwner.email, { role });
@@ -431,6 +431,29 @@ router.post(
 //     res.status(500).json({ err, message: "failure" });
 //   }
 // });
+
+//remove a call from a callList
+router.delete(
+  "/:gigId/callStack/remove/:role/:email",
+  validateSession,
+  async (req, res) => {
+    try {
+      const { role, email, gigId } = req.params;
+      const { id } = req.user;
+      const gig = await Gig.findOne({
+        where: { id: gigId, ownerId: id },
+        include: { model: CallStack },
+      });
+      const GigStack = new CallStackModel(gig.callStack);
+      const stack = GigStack.removeCall(role, email);
+      await CallStack.update(GigStack, {where: {gigId}})
+      res.status(200).json({ success: true, message: "success", stack });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ error });
+    }
+  }
+);
 
 //get array of users associated with gig, bandleader is always position 0
 router.get("/:gigId/users", validateSession, async (req, res) => {

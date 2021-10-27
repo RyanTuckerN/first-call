@@ -51,6 +51,8 @@ router.post(
         where: { id: postId, gigId },
         include: { model: User },
       });
+
+
       if (!post) {
         res
           .status(403)

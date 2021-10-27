@@ -1,5 +1,4 @@
 // const { Gig } = require("../models");
-const sequelize = require("../db");
 
 module.exports = class CallStackModel {
   /**
@@ -64,9 +63,12 @@ module.exports = class CallStackModel {
    * @returns {String} confirmed call
    */
   setStackFilled(role, name) {
-    if(name){
-      this.stackTable[role].confirmed = {email: this.stackTable[role].onCall, name}
-    }else{
+    if (name) {
+      this.stackTable[role].confirmed = {
+        email: this.stackTable[role].onCall,
+        name,
+      };
+    } else {
       this.stackTable[role].confirmed = this.stackTable[role].onCall;
     }
     this.stackTable[role].filled = true;
@@ -258,6 +260,22 @@ module.exports = class CallStackModel {
     return this.returnStackCount();
   }
 
+  /**
+   * Remove an email address from a stack, whether it is oncall or not
+   * @param {String} role 
+   * @param {String} call 
+   * @returns {Object} updated stack
+   */
+  removeCall(role, call) {
+    if (this.stackTable[role].onCall === call) {
+      this.returnNext(role);
+      return this.stackTable[role];
+    }
+    this.stackTable[role].calls = this.stackTable[role].calls.filter(
+      (c) => c !== call
+    );
+    return this.stackTable[role]
+  }
   /**
    * checks each stack. if all are filled, set gig to filled and return true, otherwise return false
    * @returns {Boolean}

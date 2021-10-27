@@ -157,11 +157,11 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
         ? //either give them a link to sign in
           `<a href='www.fistcallclient.com/acceptGig'>Click here to accept the offer</a>`
         : //or embed the info in url to be parsed on the front end and run a post fetch to accept or decline
-          `<a href='www.fistcallclient.com/acceptGig/?email=${bcrypt
+          `<a href='http://localhost:3000/respond/?email=${bcrypt
             .hashSync(options.to, 10)
             .replace(/\//g, "slash")}&gigId=${gig.id}&role=${
             options.role
-          }&token=${gig.token}&info=${JSON.stringify(details)}'>Click here to accept the offer</a>`;
+          }&token=${gig.token}'>Click here to accept the offer</a>`;
 
       /************************************************************
      //gig invite

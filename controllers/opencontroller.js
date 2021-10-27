@@ -7,7 +7,7 @@ const newEmail = require("../helpers/newEmail");
 const bcrypt = require("bcryptjs");
 
 //ACCEPT A GIG OFFER
-router.post("/:gigId/addUser/:email/:role/:token", async (req, res) => {
+router.post("/:gigId/accept/:email/:role/:token", async (req, res) => {
   try {
     const { email, gigId, role, token } = req.params;
     const { name } = req.body;
@@ -19,17 +19,19 @@ router.post("/:gigId/addUser/:email/:role/:token", async (req, res) => {
     const callStack = gig.callStack;
     const gigOwner = gig.user;
     if (!callStack || !gig || !gigOwner || !token || !name)
-      throw new Error("something is wrong with the query");
+      throw "something is wrong with the query";
 
     const GigStack = new CallStackModel(callStack);
 
     const onCall = GigStack?.stackTable[role]?.onCall;
+    if(!onCall) throw "Something went wrong! Are you sure you're on call for this gig!"
     bcrypt.compare(
       onCall,
       email.replace(/slash/g, "/"),
       async (err, success) => {
         if (err) {
           res.status(500).json({
+            message: "Something went wrong! Are you sure you're on call for this gig!",
             err,
           });
         } else if (success) {
@@ -40,7 +42,7 @@ router.post("/:gigId/addUser/:email/:role/:token", async (req, res) => {
 
           await CallStack.update(GigStack, { where: { gigId } });
           await gig.update({ openCalls: GigStack.returnOpenCalls() });
-          res.status(200).json({  message: "success!", success: true });
+          res.status(200).json({ message: "success!", success: true });
         } else {
           res.status(500).json({
             message:
@@ -50,8 +52,8 @@ router.post("/:gigId/addUser/:email/:role/:token", async (req, res) => {
       }
     );
   } catch (err) {
-    console.log(err)
-    res.status(500).json({ err, message: "failure!" });
+    console.log(err);
+    res.status(500).json({ err, message: err });
   }
 });
 
@@ -67,10 +69,11 @@ router.post("/:gigId/decline/:email/:role/:token", async (req, res) => {
     const callStack = gig.callStack;
     const gigOwner = gig.user;
     if (!callStack || !gig || !gigOwner)
-      throw new Error("something is wrong with the query");
+      throw "Something is wrong with the query";
 
     const GigStack = new CallStackModel(callStack);
     const onCall = GigStack?.stackTable[role]?.onCall;
+    if(!onCall) throw "Something went wrong! Are you sure you're on call for this gig!"
 
     bcrypt.compare(
       onCall,
@@ -81,7 +84,7 @@ router.post("/:gigId/decline/:email/:role/:token", async (req, res) => {
           console.log(err);
           res.status(500).json({
             err,
-            message: "failure",
+            message: "Something went wrong! Are you sure you're on call for this gig!",
           });
         } else if (success) {
           console.log(success);
@@ -107,8 +110,38 @@ router.post("/:gigId/decline/:email/:role/:token", async (req, res) => {
       }
     );
   } catch (err) {
-    console.log(err)
-    res.status(500).json({ err, message: "failure" });
+    console.log(err);
+    res.status(500).json({ err, message: "Something went wrong! You sure you're on call for this gig?"});
+  }
+});
+
+//get gig info
+router.get("/:gigId/:token", async (req, res) => {
+  try {
+    const { gigId, token } = req.params;
+    const gig = await Gig.findOne({
+      where: { id: gigId, token },
+      include: { model: CallStack },
+    });
+
+    const GigStack = new CallStackModel(gig.callStack);
+    const confirmed = gig.callStack ? GigStack.returnConfirmed() : [];
+    const onCalls = gig.callStack ? GigStack.returnOpenCalls() : [];
+
+    const details = await Gig.getGigInfo(gigId);
+
+     
+      confirmed.forEach((person) => {
+        if (!details.bandMembers.map((p) => p.email).includes(person.email)) {
+          details.bandMembers.push(person);
+        }
+      });
+        delete details.gig.callStack;
+
+    res.status(200).json({ success: true, message: "Success!", gig, details });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ err, message: "Something went wrong!" });
   }
 });
 

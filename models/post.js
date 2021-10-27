@@ -12,7 +12,6 @@ class Post extends Model {
       return -1;
     }
     this.voters.push(userId);
-    // console.log(this.voters)
     this.upvotes++;
     this.purifyVoters();
     return this.upvotes;

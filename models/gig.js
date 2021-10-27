@@ -11,7 +11,7 @@ const Gig = sequelize.define("gig", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  location: {
+  gigLocation: {
     type: DataTypes.STRING,
     allowNull: false,
   },

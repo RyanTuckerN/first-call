@@ -121,8 +121,8 @@ router.get("/offers", validateSession, async (req, res) => {
 
 //get count and list of all notifications belonging to requesting user
 router.get("/notifications", validateSession, async (req, res) => {
-  const { id } = req.user;
   try {
+  const { id } = req.user;
     const user = await User.findOne({ where: { id } });
     const offers = await Gig.findAll({
       where: { openCalls: { [Op.contains]: [user.email] } },
@@ -210,7 +210,7 @@ router.get("/profile/:id", validateSession, async (req, res) => {
     const user = await User.findOne({ where: { id } });
     res.status(200).json({ user, success: true, message: "success!" });
   } catch (error) {
-    console.log(err);
+    console.log(error);
     res.status(500).json({ error });
   }
 });
