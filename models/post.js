@@ -57,7 +57,7 @@ Post.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    text: { type: DataTypes.STRING, allowNull: false },
+    text: { type: DataTypes.TEXT, allowNull: false },
     childOf: DataTypes.INTEGER,
     upvotes: { type: DataTypes.INTEGER, defaultValue: 0 },
     voters: { type: DataTypes.ARRAY(DataTypes.INTEGER) },

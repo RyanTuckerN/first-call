@@ -69,6 +69,7 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
         })
       : `${to} doesn't have an account yet.`;
 
+      if(emailCode===400)return notification
     const mailOptions = {
       from: EMAIL_USER,
       to, //email address
@@ -81,7 +82,7 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
       "🔥🔥🌁 🌁 MOCK EMAIL 🌁 🌁🔥🔥: ",
       mailOptions,
       "NOTIFICATION: ",
-      notification
+      notification.text
     );
     return mailOptions;
 
@@ -117,12 +118,12 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
  * @returns {object} containing 'html' and 'subject', both Strings and details, an object
  */
 const emailController = async (gig, senderEmail, emailCode, options) => {
-  const gigDate = new Date(gig.date);
+  const gigDate = new Date(gig?.date ?? '');
   try {
     //will be undefined if user doesn't have an account
     const sender = await User.findOne({ where: { email: senderEmail } });
 
-    const gigInfo = await Gig.getGigInfo(gig.id)
+    // const gigInfo = await Gig.getGigInfo(gig.id)
     
     console.log("USER EXISTS? :", options.receiverExists);
 

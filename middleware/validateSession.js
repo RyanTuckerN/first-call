@@ -1,11 +1,13 @@
 // VALIDATE SESSION MIDDLEWARE GOES HERE
 const jwt = require("jsonwebtoken");
-const { User } = require("../models")
+const { User } = require("../models");
 
 const validateSession = (req, res, next) => {
   const token = req.headers.authorization;
   if (!token) {
-    return res.status(403).send({ auth: false, message: "🛑 No token provided 🛑" });  
+    return res
+      .status(403)
+      .send({ auth: false, message: "🛑 No token provided 🛑" });
   } else {
     jwt.verify(token, process.env.JWT_SECRET, (err, decodeToken) => {
       if (!err && decodeToken) {
@@ -22,9 +24,9 @@ const validateSession = (req, res, next) => {
           .catch((err) => next(err));
       } else {
         req.errors = err;
-        return res.status(500).json({message: "🚫 Not Authorized 🚫", err});  
+        return res.status(500).json({ message: "🚫 Not Authorized 🚫", err });
       }
-    })
+    });
   }
 };
 module.exports = validateSession;
