@@ -139,8 +139,8 @@ router.get("/notifications", validateSession, async (req, res) => {
       if (n.details.code !== 100) return n;
       if (mappedOffers.includes(n.details.gigId)) return n;
     });
-    console.log("filtered: ", filteredNotes);
-    console.log("Notifications!!!: ", notifications);
+    // console.log("filtered: ", filteredNotes);
+    // console.log("Notifications!!!: ", notifications);
 
     res.status(200).json({
       auth: true,

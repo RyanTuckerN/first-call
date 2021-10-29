@@ -10,7 +10,8 @@ const SUC = "Success!";
 
 //CREATE A GIG
 router.post("/", validateSession, async (req, res) => {
-  const { description, date, payment, gigLocation, optionalInfo, photo } = req.body;
+  const { description, date, payment, gigLocation, optionalInfo, photo } =
+    req.body;
   const token = uuidv4();
   const owner = await User.findOne({ where: { id: req.user.id } });
   try {
@@ -114,7 +115,9 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
 
     const GigStack = new CallStackModel(callStack);
     await gig.update({ openCalls: GigStack.returnOpenCalls() });
-    res.status(200).json({ message: "Success!", callStack, success: true, gig });
+    res
+      .status(200)
+      .json({ message: "Success!", callStack, success: true, gig });
   } catch (err) {
     if (err?.name === "SequelizeUniqueConstraintError") {
       res
@@ -399,10 +402,14 @@ router.post(
 
       const roleStack = GigStack.addRoleToStackTable(role, calls);
 
-      const firstCall = typeof calls === "string" ? calls : Array.isArray(calls) ? calls[0] : null;
+      const firstCall =
+        typeof calls === "string"
+          ? calls
+          : Array.isArray(calls)
+          ? calls[0]
+          : null;
 
-           
-          console.log('FIRST CALL: ⛳⛳⛳⛳⛳⛳⛳,' , firstCall)
+      // console.log('FIRST CALL: ⛳⛳⛳⛳⛳⛳⛳,' , firstCall)
 
       if (roleStack.onCall === firstCall && firstCall !== null) {
         await newEmail(roleStack.onCall, 100, gigId, gigOwner.email, { role });
@@ -413,6 +420,36 @@ router.post(
       res.status(200).json({ roleStack, message: "success", success: true });
     } catch (err) {
       res.status(500).json({ err, message: "failure" });
+    }
+  }
+);
+
+//REMOVE ONCALL AND SEND TO NEXT IN LINE
+router.post(
+  "/:gigId/callstack/sendToNext/:role",
+  validateSession,
+  async (req, res) => {
+    try {
+      const { user } = req;
+      const { gigId, role } = req.params;
+      const gig = await Gig.findOne({
+        where: { id: gigId },
+        include: { model: CallStack },
+      });
+      
+      const GigStack = gig && new CallStackModel(gig.callStack);
+      const onCall = GigStack.returnNext(role);
+      // if (onCall === "Empty stack!" && removing !== "Empty stack!") {
+      //   await newEmail(user.email, 301, gigId, removing, { role });
+      // }
+      if(onCall !== "Empty stack"){
+        await newEmail(onCall, 100, gigId, user.email, {role})
+      }
+      const updateCount = await CallStack.update(GigStack, {where: {gigId}})
+      await gig.update({ openCalls: GigStack.returnOpenCalls() });
+      res.status(200).json({success: true, message: 'Success!', callStack: GigStack, updateCount, gig})
+    } catch (error) {
+      res.status(500).json({ error });
     }
   }
 );
@@ -446,7 +483,7 @@ router.delete(
       });
       const GigStack = new CallStackModel(gig.callStack);
       const stack = GigStack.removeCall(role, email);
-      await CallStack.update(GigStack, {where: {gigId}})
+      await CallStack.update(GigStack, { where: { gigId } });
       res.status(200).json({ success: true, message: "success", stack });
     } catch (error) {
       console.log(error);

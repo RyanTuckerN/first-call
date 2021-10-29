@@ -15,6 +15,8 @@ db.sync({
 app.use(express.json());
 app.use(require('./middleware/headers'))
 
+const interval = setInterval(()=>console.log(`Yo it is ${new Date().toLocaleTimeString()}`), 1000 * 60)
+
 app.use("/user", controllers.user);
 app.use("/gig", controllers.gig);
 app.use("/board", controllers.messageboard);

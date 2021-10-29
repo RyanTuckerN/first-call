@@ -69,7 +69,7 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
         })
       : `${to} doesn't have an account yet.`;
 
-      if(emailCode===400)return notification
+    if (emailCode === 400) return notification;
     const mailOptions = {
       from: EMAIL_USER,
       to, //email address
@@ -118,13 +118,13 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
  * @returns {object} containing 'html' and 'subject', both Strings and details, an object
  */
 const emailController = async (gig, senderEmail, emailCode, options) => {
-  const gigDate = new Date(gig?.date ?? '');
+  const gigDate = new Date(gig?.date ?? "");
   try {
     //will be undefined if user doesn't have an account
     const sender = await User.findOne({ where: { email: senderEmail } });
 
     // const gigInfo = await Gig.getGigInfo(gig.id)
-    
+
     console.log("USER EXISTS? :", options.receiverExists);
 
     const details = {
@@ -158,9 +158,7 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
         ? //either give them a link to sign in
           `<a href='www.fistcallclient.com/acceptGig'>Click here to accept the offer</a>`
         : //or embed the info in url to be parsed on the front end and run a post fetch to accept or decline
-          `<a href='http://localhost:3000/respond/?email=${bcrypt
-            .hashSync(options.to, 10)
-            .replace(/\//g, "slash")}&gigId=${gig.id}&role=${
+          `<a href='http://localhost:3000/respond/?email=${Buffer.from(options.to).toString('base64')}&gigId=${gig.id}&role=${
             options.role
           }&token=${gig.token}'>Click here to accept the offer</a>`;
 
