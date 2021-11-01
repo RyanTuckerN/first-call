@@ -26,6 +26,8 @@ app.use("/board", controllers.messageboard);
 app.use("/open", controllers.open);
 app.use("/notification", controllers.notificiation);
 app.use("/message", controllers.message);
+app.use("/story", controllers.story)
+
 app.use("/", (req, res) =>
   res
     .status(200)

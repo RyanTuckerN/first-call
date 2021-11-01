@@ -3,6 +3,7 @@ const Gig = require('./gig')
 const Notification = require('./notification')
 const CallStack = require('./callStack')
 const Post = require('./post')
+const Story = require('./story')
 
 Gig.hasOne(CallStack)
 CallStack.belongsTo(Gig)
@@ -22,10 +23,17 @@ Notification.belongsTo(User)
 User.belongsToMany(Gig, {through: 'user_gigs'})
 Gig.belongsToMany(User, {through: 'user_gigs'})
 
+User.hasMany(Story)
+Story.belongsTo(User)
+
+Story.hasMany(Post)
+Post.belongsTo(Story)
+
 module.exports = { 
   User, 
   Gig, 
   Notification,
   CallStack,
-  Post
+  Post,
+  Story
 }

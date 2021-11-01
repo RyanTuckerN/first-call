@@ -1,5 +1,12 @@
 const express = require("express");
-const { User, Gig, CallStack, Notification } = require("../models");
+const {
+  User,
+  Gig,
+  CallStack,
+  Notification,
+  Story,
+  Post,
+} = require("../models");
 const CallStackModel = require("../models/CallStackModel");
 const { Op } = require("sequelize");
 const router = express.Router();
@@ -122,7 +129,7 @@ router.get("/offers", validateSession, async (req, res) => {
 //get count and list of all notifications belonging to requesting user
 router.get("/notifications", validateSession, async (req, res) => {
   try {
-  const { id } = req.user;
+    const { id } = req.user;
     const user = await User.findOne({ where: { id } });
     const offers = await Gig.findAll({
       where: { openCalls: { [Op.contains]: [user.email] } },
@@ -207,7 +214,19 @@ router.get("/auth", validateSession, async (req, res) => {
 router.get("/profile/:id", validateSession, async (req, res) => {
   const { id } = req.params;
   try {
-    const user = await User.findOne({ where: { id } });
+    const user = await User.findOne({
+      where: { id },
+      include: {
+        model: Story,
+        include: [
+          {
+            model: Post,
+            include: { model: User, attributes: ["name"] },
+          },
+          { model: User, attributes: ["name", "photo"] },
+        ],
+      },
+    });
     res.status(200).json({ user, success: true, message: "success!" });
   } catch (error) {
     console.log(error);
