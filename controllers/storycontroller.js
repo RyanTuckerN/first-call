@@ -9,7 +9,10 @@ router.post("/", validateSession, async (req, res) => {
   try {
     const { user } = req;
     const { text, imageUrl } = req.body;
-    const story = await Story.create({ text, imageUrl, userId: user.id });
+    const story = await Story.create(
+      { text, imageUrl, userId: user.id },
+      { include: { model: User, attributes: ["name", "photo", "id"] } }
+    );
     res.status(200).json({ story, success: true, message: "Success!" });
   } catch (error) {
     console.log(error);
@@ -26,7 +29,7 @@ router.post("/vote/:storyId", validateSession, async (req, res) => {
       where: { id: storyId },
       include: {
         model: Post,
-        include: { model: User, attributes: ["name", "photo"] },
+        include: { model: User, attributes: ["name", "photo", "id"] },
       },
     });
     console.log(story);
@@ -54,7 +57,7 @@ router.post("/:storyId/post", validateSession, async (req, res) => {
     const { storyId } = req.params;
     const post = await Post.create(
       { author: user.id, text, storyId },
-      { include: { model: User, attributes: ["name", "photo"] } }
+      { include: { model: User, attributes: ["name", "photo", "id"] } }
     );
     console.log(post);
     res.status(200).json({ success: true, post, message: "Success!" });
@@ -71,7 +74,7 @@ router.post("/:storyId/post/:postId", validateSession, async (req, res) => {
     const { storyId, postId } = req.params;
     const post = await Post.findOne({
       where: { id: postId, storyId },
-      include: { model: User, attributes: ["name", "photo"] },
+      include: { model: User, attributes: ["name", "photo", "id"] },
     });
     post.voters.includes(user.id)
       ? post.removeUpvote(user.id)
@@ -98,9 +101,9 @@ router.get("/:storyId", validateSession, async (req, res) => {
       include: [
         {
           model: Post,
-          include: { model: User, attributes: ["name", "photo"] },
+          include: { model: User, attributes: ["name", "photo", "id"] },
         },
-        { model: User, attributes: ["name", "photo"] },
+        { model: User, attributes: ["name", "photo", "id"] },
       ],
     });
 
@@ -109,6 +112,5 @@ router.get("/:storyId", validateSession, async (req, res) => {
     res.status(500).json({ error, message: "Something went wrong!" });
   }
 });
-
 
 module.exports = router;
