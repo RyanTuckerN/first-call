@@ -44,7 +44,7 @@ router.post("/:gigId/accept/:email/:role/:token", async (req, res) => {
 
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({ openCalls: GigStack.returnOpenCalls() });
-      res.status(200).json({ message: "success!", success: true });
+      res.status(200).json({ message: "success!", success: true, confirmed: {name, email: onCall} });
     } else {
       res.status(500).json({
         message: "Something went wrong! You sure you're on call for this gig?",

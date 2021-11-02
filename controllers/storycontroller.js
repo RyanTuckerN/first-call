@@ -113,4 +113,22 @@ router.get("/:storyId", validateSession, async (req, res) => {
   }
 });
 
+//get all stories
+router.get("/", async (req, res) => {
+  try {
+    const stories = await Story.findAll({
+      include: [
+        { model: User, attributes: ["name", "id", "photo"] },
+        {
+          model: Post,
+          include: { model: User, attributes: ["name", "id", "photo"] },
+        },
+      ],
+    });
+    res.status(200).json({ stories, success: true, message: "Success!" });
+  } catch (error) {
+    res.status(500).json({ error, message: "Something went wrong!" });
+  }
+});
+
 module.exports = router;
