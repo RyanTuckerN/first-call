@@ -234,4 +234,60 @@ router.get("/profile/:id", validateSession, async (req, res) => {
   }
 });
 
+//follow user
+router.post("/follow/:userId", validateSession, async (req, res) => {
+  try {
+    const { user } = req;
+    const { userId } = req.params;
+    const followed = await User.findOne({ where: { id: parseInt(userId) } });
+    const result2 = await followed.update({
+      followers: [...new Set([...followed.followers, parseInt(user.id)])],
+    });
+    const result = await user.update({
+      following: [...new Set([...user.following, parseInt(userId)])],
+    });
+    console.log(result);
+    res.status(200).json({
+      success: true,
+      following: result.following,
+      followers: result2.followers,
+      message: "Success!",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error, message: "Something went wrong!" });
+  }
+});
+
+//unfollow user
+router.post("/unfollow/:userId", validateSession, async (req, res) => {
+  try {
+    const { user } = req;
+    const { userId } = req.params;
+    const unfollowed = await User.findOne({ where: { id: parseInt(userId) } });
+    const result2 = await unfollowed.update({
+      followers: [
+        ...new Set([
+          ...unfollowed.followers.filter((f) => f !== parseInt(user.id)),
+        ]),
+      ],
+    });
+    const result = await user.update({
+      following: [
+        ...new Set([...user.following.filter((f) => f !== parseInt(userId))]),
+      ],
+    });
+    console.log(result);
+    res.status(200).json({
+      success: true,
+      following: result.following,
+      followers: result2.followers,
+      message: "Success!",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error, message: "Something went wrong!" });
+  }
+});
+
 module.exports = router;

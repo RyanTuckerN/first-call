@@ -29,6 +29,7 @@ const Gig = sequelize.define("gig", {
   optionalInfo: DataTypes.JSONB,
 });
 
+
 /**
  * Gig method that associates User instance to Gig instance, persists the relationship to the Database via user_gigs table
  * @param {Number} userId user to add
