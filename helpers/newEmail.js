@@ -79,26 +79,32 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
 
     //FOR TESTING PURPOSES:
     console.log(
-      "🔥🔥🌁 🌁 MOCK EMAIL 🌁 🌁🔥🔥: ",
-      mailOptions,
+      // "🔥🔥🌁 🌁 MOCK EMAIL 🌁 🌁🔥🔥: ",
+      // mailOptions,
       "NOTIFICATION: ",
       notification.text
     );
-    return mailOptions;
+    // return mailOptions;
 
     //   ADD LOGIC THAT WILL LOOK AT RECEIVER'S SETTINGS
     //   AND PREVENT EMAILS IF THEY HAVE DISABLED THEM
     //UNCOMMENT THE FOLLOWING TO ACTUALLY SEND EMAILS!!!
-    // transporter.sendMail(mailOptions, (err, info) => {
-    //   if (err) {
-    //     console.error(err);
-    //     return {err}
-    //   } else {
-    //     console.log(`Email sent: ${info}.`);
-    //     return { info }
+   
+    //🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡 //
+   
+    // emailCode === 100 &&
+    //   transporter.sendMail(mailOptions, (err, info) => {
+    //     if (err) {
+    //       console.error("LINE 84 NEWEMAIL: ", err, "TO:", to);
+    //       return { err };
+    //     } else {
+    //       console.log(`Email sent: ${{ info }}.`);
+    //       return { info };
+    //     }
+    //   });
 
-    //   }
-    // });
+
+
   } catch (err) {
     console.log(err);
   }
@@ -140,15 +146,15 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
      */
     const infoMapper = (info) => {
       //include optionalInfo about gig in the body of the email
+      if (!info) return "";
       const infoTopics = Object.keys(info);
       if (!infoTopics.length) return;
       let htmlOutput = "";
       infoTopics.forEach((topic) => {
         htmlOutput += `
-        <dt>
+        <li>
           <strong>${properize(topic)}:</strong>
-        </dt>
-        <dd>${info[topic]}</dd>`;
+        ${info[topic]}</li>`;
       });
       return htmlOutput;
     };
@@ -156,12 +162,15 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
     if (emailCode === 100) {
       const anchorUrl = options?.receiverExists
         ? //either give them a link to sign in
-          `<a href='www.fistcallclient.com/acceptGig'>Click here to accept the offer</a>`
+          `www.fistcallclient.com/acceptGig`
         : //or embed the info in url to be parsed on the front end and run a post fetch to accept or decline
-          `<a href='http://localhost:3000/respond/?email=${Buffer.from(options.to).toString('base64')}&gigId=${gig.id}&role=${
-            options.role
-          }&token=${gig.token}'>Click here to accept the offer</a>`;
+          `http://localhost:3000/respond/?email=${Buffer.from(
+            options.to
+          ).toString("base64")}&gigId=${gig.id}&role=${options.role}&token=${
+            gig.token
+          }`;
 
+      console.log("ANCHOR URL: ", anchorUrl);
       /************************************************************
      //gig invite
 
@@ -174,21 +183,434 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //If so, they can go to their page and accept.
       //Otherwise, they get a link that will let them accept without account
       return {
-        html: `<h4>${details.sender} is inviting you to a gig! </h4>
-   <h6> ${gigDate.toLocaleDateString()}, ${returnTime(gigDate)} </h6>
-   
-   <div>  
-     <dl>
-       <dt><strong>What:</strong></dt><dd>${gig.description}</dd>
-       <dt><strong>Where:</strong></dt><dd>${gig.location}</dd
-       <dt><strong>How much:</strong></dt><dd>$${gig.payment}</dd
-       ${gig.optionalInfo ? infoMapper(gig.optionalInfo) : null}
-     </dl>
-   </div>
-   <div>
-     ${anchorUrl}
-   </div>   
-   `,
+        html: `<div style="background-color: #f9f9f9">
+        <div
+          style="
+            background: #f9f9f9;
+            background-color: #f9f9f9;
+            margin: 0px auto;
+            max-width: 600px;
+          "
+        >
+          <table
+            align="center"
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            role="presentation"
+            style="background: #f9f9f9; background-color: #f9f9f9; width: 100%"
+          >
+            <tbody>
+              <tr>
+                <td
+                  style="
+                    border-bottom: #333957 solid 5px;
+                    direction: ltr;
+                    font-size: 0px;
+                    padding: 20px 0;
+                    text-align: center;
+                    vertical-align: top;
+                  "
+                ></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+  
+        <div
+          style="
+            background: #fff;
+            background-color: #fff;
+            margin: 0px auto;
+            max-width: 600px;
+          "
+        >
+          <table
+            align="center"
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            role="presentation"
+            style="background: #fff; background-color: #fff; width: 100%"
+          >
+            <tbody>
+              <tr>
+                <td
+                  style="
+                    border: #dddddd solid 1px;
+                    border-top: 0px;
+                    direction: ltr;
+                    font-size: 0px;
+                    padding: 20px 0;
+                    text-align: center;
+                    vertical-align: top;
+                  "
+                >
+                  <div
+                    class="mj-column-per-100 outlook-group-fix"
+                    style="
+                      font-size: 13px;
+                      text-align: left;
+                      direction: ltr;
+                      display: inline-block;
+                      vertical-align: bottom;
+                      width: 100%;
+                    "
+                  >
+                    <table
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      style="vertical-align: bottom"
+                      width="100%"
+                    >
+                      <tr>
+                        <td
+                          align="center"
+                          style="
+                            font-size: 0px;
+                            padding: 10px 25px;
+                            padding-bottom: 40px;
+                            word-break: break-word;
+                          "
+                        >
+                          <div
+                            style="
+                              font-family: 'Impact';
+                              font-size: 40px;
+                              font-weight: 400;
+                              line-height: 1;
+                              color: rgb(38, 38, 38);
+                              text-align: center;
+                            "
+                          >
+                            First<span style="color: rgb(161, 29, 255)">C</span
+                            >all
+                          </div>
+                        </td>
+                      </tr>
+  
+                      <tr>
+                        <td
+                          align="center"
+                          style="
+                            font-size: 0px;
+                            padding: 10px 25px;
+                            padding-bottom: 40px;
+                            word-break: break-word;
+                          "
+                        >
+                          <div
+                            style="
+                              font-family: 'Helvetica Neue', Arial, sans-serif;
+                              font-size: 28px;
+                              font-weight: bold;
+                              line-height: 1;
+                              text-align: center;
+                              color: #555;
+                            "
+                          >
+                          ${details.sender} has sent you a gig request!
+                          </div>
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td
+                          align="center"
+                          style="
+                            font-size: 0px;
+                            padding: 10px 25px;
+                            padding-bottom: 40px;
+                            word-break: break-word;
+                          "
+                        >
+                          <div
+                            style="
+                              font-family: 'Helvetica Neue', Arial, sans-serif;
+                              font-size: 22px;
+                              font-weight: bold;
+                              line-height: 1;
+                              text-align: center;
+                              color: #555;
+                            "
+                          >
+                          ${gigDate.toLocaleDateString()}, ${returnTime(
+          gigDate
+        )}
+                          </div>
+                        </td>
+                      </tr>
+  
+                     
+                      <tr>
+                        <td
+                          align="center"
+                          style="
+                            font-size: 0px;
+                            padding: 10px 25px;
+                            padding-bottom: 0;
+                            word-break: break-word;
+                          "
+                        >
+                          <div
+                            style="
+                              font-family: 'Helvetica Neue', Arial, sans-serif;
+                              font-size: 16px;
+                              line-height: 22px;
+                              text-align: center;
+                              color: #555;
+                            "
+                          >
+                            <ul style="list-style: none">
+                              <li><strong>What:</strong> ${gig.description}</li>
+                              <li><strong>When:</strong> ${gigDate.toLocaleDateString()}, ${returnTime(
+          gigDate
+        )}</li>
+                              <li>
+                                <strong>Where:</strong> ${gig.gigLocation}
+                              </li>
+                              <li><strong>Pay:</strong> $${gig.payment}</li>
+                              ${!!details && infoMapper()}
+                            </ul>
+                          </div>
+                        </td>
+                      </tr>
+  
+                      <tr>
+                        <td
+                          align="center"
+                          style="
+                            font-size: 0px;
+                            padding: 10px 25px;
+                            padding-bottom: 20px;
+                            word-break: break-word;
+                          "
+                        >
+                          <div
+                            style="
+                              font-family: 'Helvetica Neue', Arial, sans-serif;
+                              font-size: 16px;
+                              line-height: 22px;
+                              text-align: center;
+                              color: #555;
+                            "
+                          >
+                            Please follow the link below to respond. You don't
+                            need an account to reply!
+                          </div>
+                        </td>
+                      </tr>
+  
+                      <tr>
+                        <td
+                          align="center"
+                          style="
+                            font-size: 0px;
+                            padding: 10px 25px;
+                            padding-top: 30px;
+                            padding-bottom: 40px;
+                            word-break: break-word;
+                          "
+                        >
+                          <table
+                            align="center"
+                            border="0"
+                            cellpadding="0"
+                            cellspacing="0"
+                            role="presentation"
+                            style="border-collapse: separate; line-height: 100%"
+                          >
+                            <tr>
+                              <td
+                                align="center"
+                                role="presentation"
+                                style="
+                                  border: none;
+                                  border-radius: 3px;
+                                  background: rgb(161, 29, 255);
+                                  color: #ffffff;
+                                  cursor: auto;
+                                  padding: 15px 25px;
+                                "
+                                valign="middle"
+                              >
+                                <p
+                                  style="
+                                    background: rgb(161, 29, 255);
+                                    color: #ffffff;
+                                    font-family: 'Helvetica Neue', Arial,
+                                      sans-serif;
+                                    font-size: 15px;
+                                    font-weight: normal;
+                                    line-height: 120%;
+                                    margin: 0;
+                                    text-decoration: none;
+                                    text-transform: none;
+                                  "
+                                >
+                                  <a
+                                    href="${anchorUrl}"
+                                    style="color: #fafafa; text-decoration: none"
+                                    >Click here to respond!</a
+                                  >
+                                </p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+  
+                      <tr>
+                        <td
+                          align="center"
+                          style="
+                            font-size: 0px;
+                            padding: 10px 25px;
+                            word-break: break-word;
+                          "
+                        >
+                          <div
+                            style="
+                              font-family: 'Helvetica Neue', Arial, sans-serif;
+                              font-size: 26px;
+                              font-weight: bold;
+                              line-height: 1;
+                              text-align: center;
+                              color: #555;
+                            "
+                          >
+                            Need Help? <br/> 
+                            Think something is wrong?
+                          </div>
+                        </td>
+                      </tr>
+  
+                      <tr>
+                        <td
+                          align="center"
+                          style="
+                            font-size: 0px;
+                            padding: 10px 25px;
+                            word-break: break-word;
+                          "
+                        >
+                          <div
+                            style="
+                              font-family: 'Helvetica Neue', Arial, sans-serif;
+                              font-size: 14px;
+                              line-height: 22px;
+                              text-align: center;
+                              color: #555;
+                            "
+                          >
+                            Please send any feedback to
+                            <a
+                              href="mailto:info@example.com"
+                              style="color: #2f67f6"
+                              >info@example.com</a
+                            >
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+  
+        <div style="margin: 0px auto; max-width: 600px">
+          <table
+            align="center"
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            role="presentation"
+            style="width: 100%"
+          >
+            <tbody>
+              <tr>
+                <td
+                  style="
+                    direction: ltr;
+                    font-size: 0px;
+                    padding: 20px 0;
+                    text-align: center;
+                    vertical-align: top;
+                  "
+                >
+                  <div
+                    class="mj-column-per-100 outlook-group-fix"
+                    style="
+                      font-size: 13px;
+                      text-align: left;
+                      direction: ltr;
+                      display: inline-block;
+                      vertical-align: bottom;
+                      width: 100%;
+                    "
+                  >
+                    <table
+                      border="0"
+                      cellpadding="0"
+                      cellspacing="0"
+                      role="presentation"
+                      width="100%"
+                    >
+                      <tbody>
+                        <tr>
+                          <td style="vertical-align: bottom; padding: 0">
+                            <table
+                              border="0"
+                              cellpadding="0"
+                              cellspacing="0"
+                              role="presentation"
+                              width="100%"
+                            >
+                              <tr>
+                                <td
+                                  align="center"
+                                  style="
+                                    font-size: 0px;
+                                    padding: 0;
+                                    word-break: break-word;
+                                  "
+                                >
+                                  <div
+                                    style="
+                                      font-family: 'Helvetica Neue', Arial,
+                                        sans-serif;
+                                      font-size: 12px;
+                                      font-weight: 300;
+                                      line-height: 1;
+                                      text-align: center;
+                                      color: #575757;
+                                    "
+                                  >
+                                    FirstCall is a gig management tool that
+                                    aims to be the #1 software solution for
+                                    independant musicians and bandleaders. We know
+                                    the stresses of freelancing, and want to help
+                                    bandleaders automate the process of booking
+                                    musicians for their gigs.
+                                  </div>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>`,
         subject: `Gig request from ${details.sender}`,
         details,
       };
