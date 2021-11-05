@@ -7,7 +7,7 @@ const {
   Story,
   Post,
 } = require("../models");
-const CallStackModel = require("../models/CallStackModel");
+// const CallStackModel = require("../models/CallStackModel");
 const { Op } = require("sequelize");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
@@ -287,6 +287,21 @@ router.post("/unfollow/:userId", validateSession, async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ error, message: "Something went wrong!" });
+  }
+});
+
+//GET FOLLOWING and FOLLOWERS
+router.get("/follows", validateSession, async (req, res) => {
+  try {
+    const { following, followers } = req.user;
+    const users = await User.findAll({
+      where: { id: {[Op.in] :[...new Set([...following, ...followers])]} },
+      attributes: ["name", "photo", "role", 'id'] ,
+    });
+    res.status(200).json({users, success: true, message: 'Success!'})
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({error, message: 'Something went wrong!'})
   }
 });
 
