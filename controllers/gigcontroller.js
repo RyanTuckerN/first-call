@@ -191,6 +191,7 @@ router.post("/details", validateSession, async (req, res) => {
         : null;
       const confirmed = GigStack ? GigStack?.returnConfirmed() : [];
       const query = await Gig.getGigInfo(gigId);
+      console.log(query)
       if (query) {
         confirmed.forEach((person) => {
           if (!query.bandMembers.map((p) => p.email).includes(person.email)) {
@@ -204,11 +205,12 @@ router.post("/details", validateSession, async (req, res) => {
       }
     });
     const arr = await Promise.all(promises);
+
     const hash = arr.reduce((a, b) => {
       a[b[0]] = b[1];
       return a;
     }, {});
-
+    console.log('::: ::: hash ::: ::: ', hash)
     res.status(200).json({ hash, success: true });
   } catch (error) {
     console.log(error);
@@ -352,6 +354,7 @@ router.post(
         return;
       }
 
+      
       GigStack.addCallToStack(role, email);
       if (GigStack.stackTable[role].onCall === email) {
         await newEmail(email, 100, gigId, gigOwner.email, { role });
@@ -498,6 +501,7 @@ router.get("/:gigId/users", validateSession, async (req, res) => {
   try {
     const query = await Gig.getGigInfo(gigId);
     if (query) {
+
       const authorizedUsers = [
         query.bandLeader.id,
         ...query.bandMembers.map((user) => user.id),
@@ -516,18 +520,18 @@ router.get("/:gigId/users", validateSession, async (req, res) => {
   }
 });
 
-router.get("/email/:gigId", validateSession, async (req, res) => {
-  try {
-    const { to, emailCode, sender, options } = req.body;
-    const { gigId } = req.params;
-    await newEmail(to, emailCode, gigId, sender, options);
-    res
-      .status(200)
-      .json({ message: "I did my part! Not sure if it worked lol" });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Something went wrong", err });
-  }
-});
+// router.get("/email/:gigId", validateSession, async (req, res) => {
+//   try {
+//     const { to, emailCode, sender, options } = req.body;
+//     const { gigId } = req.params;
+//     await newEmail(to, emailCode, gigId, sender, options);
+//     res
+//       .status(200)
+//       .json({ message: "I did my part! Not sure if it worked lol" });
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ message: "Something went wrong", err });
+//   }
+// });
 
 module.exports = router;

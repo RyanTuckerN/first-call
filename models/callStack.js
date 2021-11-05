@@ -10,7 +10,7 @@ const CallStack = sequelize.define("callStack", {
   },
   stackTable: DataTypes.JSONB,
   filled: { type: DataTypes.BOOLEAN, defaultValue: false },
-
+  
 });
 
 /**

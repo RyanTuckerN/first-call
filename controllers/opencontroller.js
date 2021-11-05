@@ -43,8 +43,17 @@ router.post("/:gigId/accept/:email/:role/:token", async (req, res) => {
         : await newEmail(gigOwner.email, 201, gigId, onCall, { role });
 
       await CallStack.update(GigStack, { where: { gigId } });
-      await gig.update({ openCalls: GigStack.returnOpenCalls() });
-      res.status(200).json({ message: "success!", success: true, confirmed: {name, email: onCall} });
+      await gig.update({
+        openCalls: GigStack.returnOpenCalls(),
+        confirmedNoAccount: [...gig.confirmedNoAccount, onCall],
+      });
+      res
+        .status(200)
+        .json({
+          message: "success!",
+          success: true,
+          confirmed: { name, email: onCall },
+        });
     } else {
       res.status(500).json({
         message: "Something went wrong! You sure you're on call for this gig?",
@@ -74,7 +83,6 @@ router.post("/:gigId/decline/:email/:role/:token", async (req, res) => {
     const onCall = GigStack?.stackTable[role]?.onCall;
     if (!onCall)
       throw "Something went wrong! Are you sure you're on call for this gig!";
-
 
     const [err, success] = [
       Buffer.from(email, "base64").toString("utf8") !== onCall,

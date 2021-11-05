@@ -172,6 +172,15 @@ module.exports = class CallStackModel {
       };
     }
 
+    //if this role is confirmed, just add as backup 
+    if (this.stackTable[role].filled){
+      this.stackTable[role].calls =[...this.stackTable[role].calls, call]
+      return {
+        stack: this.stackTable[role].calls,
+        onCall: this.stackTable[role].onCall,
+        message: `${call} added successfully`,
+      };
+    }
     //otherwise do add it
     else {
       this.stackTable[role].calls.push(call);

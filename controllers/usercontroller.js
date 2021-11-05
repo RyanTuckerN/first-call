@@ -28,17 +28,27 @@ router.post("/signup", (req, res) => {
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
         expiresIn: 86400,
       });
-
-      res.status(200).json({
-        user: {
-          id: user.id,
-          email,
-          name,
-        },
-        message: `Success! Account created for ${name}!`,
-        sessionToken: token,
-        success: true,
-      });
+      Gig.findAll({where: {confirmedNoAccount: {[Op.contains]: [email]}}, include: {model: CallStack}})
+      .then((gigs)=>{
+        const proms = gigs.map(async(gig)=>await Gig.addUserToGig(user.id, gig.id))
+        Promise.all(proms).then(resolutions=>{
+          console.log(gigs)
+          res.status(200).json({
+            user: {
+              id: user.id,
+              email,
+              name,
+            },
+            resolutions,
+            message: `Success! Account created for ${name}!`,
+            sessionToken: token,
+            success: true,
+            gigs
+          });
+        })
+        
+      })
+      
     })
     .catch((err) => {
       res.status(500).json({ error: err });
@@ -211,6 +221,7 @@ router.get("/auth", validateSession, async (req, res) => {
   }
 });
 
+//get users profile
 router.get("/profile/:id", validateSession, async (req, res) => {
   const { id } = req.params;
   try {
