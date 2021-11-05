@@ -296,7 +296,7 @@ router.get("/follows", validateSession, async (req, res) => {
     const { following, followers } = req.user;
     const users = await User.findAll({
       where: { id: {[Op.in] :[...new Set([...following, ...followers])]} },
-      attributes: ["name", "photo", "role", 'id'] ,
+      attributes: ["name", "photo", "role", 'id', 'email'] ,
     });
     res.status(200).json({users, success: true, message: 'Success!'})
   } catch (error) {
