@@ -131,4 +131,39 @@ router.get("/", async (req, res) => {
   }
 });
 
+// delete a story
+router.delete("/:storyId", validateSession, async (req, res) => {
+  try {
+    const { id } = req.user;
+    const { storyId } = req.params;
+    const result = await Promise.all([
+      Post.destroy({ where: { storyId } }),
+      Story.destroy({ where: { id: storyId, userId: id } }),
+    ]);
+    res.status(200).json({result, success: true, message: 'Success!'})
+  } catch (error) {
+    res.status(500).json({error, message: 'Something went wrong!'})
+  }
+});
+
+//get three stories for dashboard
+router.get("/dashboard", async (req, res) => {
+  try {
+    const stories = await Story.findAll({
+      order: [['createdAt'], ['DESC']],
+      limit: 3,
+      include: [
+        { model: User, attributes: ["name", "id", "photo"] },
+        {
+          model: Post,
+          include: { model: User, attributes: ["name", "id", "photo"] },
+        },
+      ],
+    });
+    res.status(200).json({ stories, success: true, message: "Success!" });
+  } catch (error) {
+    res.status(500).json({ error, message: "Something went wrong!" });
+  }
+});
+
 module.exports = router;
