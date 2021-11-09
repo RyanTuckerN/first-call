@@ -32,9 +32,9 @@ router.post("/vote/:storyId", validateSession, async (req, res) => {
         include: { model: User, attributes: ["name", "photo", "id"] },
       },
     });
-    console.log(story);
+    // console.log(story);
     const votes = await story.vote(id);
-    console.log(votes);
+    // console.log(votes);
     const result = await Story.update(
       { likers: story.likers },
       { where: { id: storyId } }
@@ -59,7 +59,7 @@ router.post("/:storyId/post", validateSession, async (req, res) => {
       { author: user.id, text, storyId },
       { include: { model: User, attributes: ["name", "photo", "id"] } }
     );
-    console.log(post);
+    // console.log(post);
     res.status(200).json({ success: true, post, message: "Success!" });
   } catch (error) {
     console.log(error);
@@ -92,7 +92,7 @@ router.post("/:storyId/post/:postId", validateSession, async (req, res) => {
 });
 
 //get story by id
-router.get("/:storyId", validateSession, async (req, res) => {
+router.get("/id/:storyId", validateSession, async (req, res) => {
   try {
     // const { user } = req;
     const { storyId } = req.params;
@@ -116,7 +116,11 @@ router.get("/:storyId", validateSession, async (req, res) => {
 //get all stories
 router.get("/", async (req, res) => {
   try {
+    const lt = req.query.lt ?? 1000000000
     const stories = await Story.findAll({
+      where: {id: {[Op.lt]: lt}},
+      order: [['id', 'DESC']],
+      limit: 3,
       include: [
         { model: User, attributes: ["name", "id", "photo"] },
         {
@@ -140,9 +144,9 @@ router.delete("/:storyId", validateSession, async (req, res) => {
       Post.destroy({ where: { storyId } }),
       Story.destroy({ where: { id: storyId, userId: id } }),
     ]);
-    res.status(200).json({result, success: true, message: 'Success!'})
+    res.status(200).json({ result, success: true, message: "Success!" });
   } catch (error) {
-    res.status(500).json({error, message: 'Something went wrong!'})
+    res.status(500).json({ error, message: "Something went wrong!" });
   }
 });
 
@@ -150,7 +154,7 @@ router.delete("/:storyId", validateSession, async (req, res) => {
 router.get("/dashboard", async (req, res) => {
   try {
     const stories = await Story.findAll({
-      order: [['createdAt'], ['DESC']],
+      // order: [['createdAt'], ['DESC']],
       limit: 3,
       include: [
         { model: User, attributes: ["name", "id", "photo"] },

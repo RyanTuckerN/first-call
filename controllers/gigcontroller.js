@@ -191,7 +191,7 @@ router.post("/details", validateSession, async (req, res) => {
         : null;
       const confirmed = GigStack ? GigStack?.returnConfirmed() : [];
       const query = await Gig.getGigInfo(gigId);
-      console.log(query)
+      // console.log(query)
       if (query) {
         confirmed.forEach((person) => {
           if (!query.bandMembers.map((p) => p.email).includes(person.email)) {
@@ -210,7 +210,7 @@ router.post("/details", validateSession, async (req, res) => {
       a[b[0]] = b[1];
       return a;
     }, {});
-    console.log('::: ::: hash ::: ::: ', hash)
+    // console.log('::: ::: hash ::: ::: ', hash)
     res.status(200).json({ hash, success: true });
   } catch (error) {
     console.log(error);

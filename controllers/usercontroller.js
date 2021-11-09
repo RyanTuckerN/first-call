@@ -28,11 +28,15 @@ router.post("/signup", (req, res) => {
       const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
         expiresIn: 86400,
       });
-      Gig.findAll({where: {confirmedNoAccount: {[Op.contains]: [email]}}, include: {model: CallStack}})
-      .then((gigs)=>{
-        const proms = gigs.map(async(gig)=>await Gig.addUserToGig(user.id, gig.id))
-        Promise.all(proms).then(resolutions=>{
-          console.log(gigs)
+      Gig.findAll({
+        where: { confirmedNoAccount: { [Op.contains]: [email] } },
+        include: { model: CallStack },
+      }).then((gigs) => {
+        const proms = gigs.map(
+          async (gig) => await Gig.addUserToGig(user.id, gig.id)
+        );
+        Promise.all(proms).then((resolutions) => {
+          // console.log(gigs)
           res.status(200).json({
             user: {
               id: user.id,
@@ -43,12 +47,10 @@ router.post("/signup", (req, res) => {
             message: `Success! Account created for ${name}!`,
             sessionToken: token,
             success: true,
-            gigs
+            gigs,
           });
-        })
-        
-      })
-      
+        });
+      });
     })
     .catch((err) => {
       res.status(500).json({ error: err });
@@ -257,7 +259,7 @@ router.post("/follow/:userId", validateSession, async (req, res) => {
     const result = await user.update({
       following: [...new Set([...user.following, parseInt(userId)])],
     });
-    console.log(result);
+    // console.log(result);
     res.status(200).json({
       success: true,
       following: result.following,
@@ -288,7 +290,7 @@ router.post("/unfollow/:userId", validateSession, async (req, res) => {
         ...new Set([...user.following.filter((f) => f !== parseInt(userId))]),
       ],
     });
-    console.log(result);
+    // console.log(result);
     res.status(200).json({
       success: true,
       following: result.following,
@@ -302,17 +304,49 @@ router.post("/unfollow/:userId", validateSession, async (req, res) => {
 });
 
 //GET FOLLOWING and FOLLOWERS
-router.get("/follows", validateSession, async (req, res) => {
+router.get("/follows/:userId", validateSession, async (req, res) => {
   try {
-    const { following, followers } = req.user;
+    const { following, followers } =
+      req.user.id === req.params.userId
+        ? req.user
+        : await User.findOne({
+            where: { id: req.params.userId },
+            // attributes: ["following", "followers"],
+          });
     const users = await User.findAll({
-      where: { id: {[Op.in] :[...new Set([...following, ...followers])]} },
-      attributes: ["name", "photo", "role", 'id', 'email'] ,
+      where: { id: { [Op.in]: [...new Set([...following, ...followers])] } },
+      attributes: ["name", "photo", "role", "id", "email"],
     });
-    res.status(200).json({users, success: true, message: 'Success!'})
+    res.status(200).json({ users, success: true, message: "Success!" });
   } catch (error) {
-    console.log(error)
-    res.status(500).json({error, message: 'Something went wrong!'})
+    console.log(error);
+    res.status(500).json({ error, message: "Something went wrong!" });
+  }
+});
+
+//SEARCH FOR USER
+router.get("/search/:string", validateSession, async (req, res) => {
+  try {
+    const { string } = req.params;
+    const usersRaw = await User.findAll({
+      where: {
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${string}%` } },
+          { role: { [Op.iLike]: `%${string}%` } },
+          { location: { [Op.iLike]: `%${string}%` } },
+          { email: { [Op.iLike]: `%${string}%` } },
+        ],
+      },
+      attributes: ["name", "role", "photo", "id"],
+      limit: 6,
+    });
+    const users = usersRaw.map((user) => {
+      return { ...user.dataValues, url: `/main/profile/${user.id}` };
+    });
+    res.status(200).json({ success: true, users, message: "success!" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error, message: "Something went wrong!" });
   }
 });
 
