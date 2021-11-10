@@ -116,10 +116,10 @@ router.get("/id/:storyId", validateSession, async (req, res) => {
 //get all stories
 router.get("/", async (req, res) => {
   try {
-    const lt = req.query.lt ?? 1000000000
+    const lt = req.query.lt ?? 1000000000;
     const stories = await Story.findAll({
-      where: {id: {[Op.lt]: lt}},
-      order: [['id', 'DESC']],
+      where: { id: { [Op.lt]: lt } },
+      order: [["id", "DESC"]],
       limit: 3,
       include: [
         { model: User, attributes: ["name", "id", "photo"] },
@@ -151,11 +151,14 @@ router.delete("/:storyId", validateSession, async (req, res) => {
 });
 
 //get three stories for dashboard
-router.get("/dashboard", async (req, res) => {
+router.get("/dashboard", validateSession, async (req, res) => {
   try {
     const stories = await Story.findAll({
       // order: [['createdAt'], ['DESC']],
       limit: 3,
+      order: [["id", "DESC"]],
+      //FOLLOWING LINE INCLUDES ONLY USERS THAT ARE FOLLOWED
+      // where: {userId: req.user.following},
       include: [
         { model: User, attributes: ["name", "id", "photo"] },
         {
