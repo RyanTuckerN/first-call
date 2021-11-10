@@ -155,7 +155,7 @@ router.get("/dashboard", validateSession, async (req, res) => {
   try {
     const stories = await Story.findAll({
       // order: [['createdAt'], ['DESC']],
-      limit: 3,
+      limit: 5,
       order: [["id", "DESC"]],
       //FOLLOWING LINE INCLUDES ONLY USERS THAT ARE FOLLOWED
       // where: {userId: req.user.following},

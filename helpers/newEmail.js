@@ -63,10 +63,10 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
     //create a notification if the email address has an account associated with it
     const notification = receiver?.id
       ? await Notification.create({
-          text: subject,
-          userId: receiver.id,
-          details: { ...details, ...options, code: emailCode },
-        })
+        text: subject,
+        userId: receiver.id,
+        details: { ...details, ...options, code: emailCode },
+      })
       : `${to} doesn't have an account yet.`;
 
     if (emailCode === 400) return notification;
@@ -89,22 +89,20 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
     //   ADD LOGIC THAT WILL LOOK AT RECEIVER'S SETTINGS
     //   AND PREVENT EMAILS IF THEY HAVE DISABLED THEM
     //UNCOMMENT THE FOLLOWING TO ACTUALLY SEND EMAILS!!!
-   
+
     //🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡 //
-   
-    // emailCode === 100 &&
-    //   transporter.sendMail(mailOptions, (err, info) => {
-    //     if (err) {
-    //       console.error("LINE 84 NEWEMAIL: ", err, "TO:", to);
-    //       return { err };
-    //     } else {
-    //       console.log(`Email sent: ${{ info }}.`);
-    //       return { info };
-    //     }
-    //   });
 
 
-
+    emailCode === 100 && (receiver?.emails ?? true) &&
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          console.error("LINE 99 NEWEMAIL: ", err, "TO:", to);
+          return { err };
+        } else {
+          console.log(`Email sent: ${{ info }}.`);
+          return { info };
+        }
+      });
   } catch (err) {
     console.log(err);
   }
@@ -162,13 +160,12 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
     if (emailCode === 100) {
       const anchorUrl = options?.receiverExists
         ? //either give them a link to sign in
-          `www.fistcallclient.com/acceptGig`
+        `www.fistcallclient.com/acceptGig`
         : //or embed the info in url to be parsed on the front end and run a post fetch to accept or decline
-          `http://localhost:3000/respond/?email=${Buffer.from(
-            options.to
-          ).toString("base64")}&gigId=${gig.id}&role=${options.role}&token=${
-            gig.token
-          }`;
+        `http://localhost:3000/respond/?email=${Buffer.from(
+          options.to
+        ).toString("base64")}&gigId=${gig.id}&role=${options.role}&token=${gig.token
+        }`;
 
       console.log("ANCHOR URL: ", anchorUrl);
       /************************************************************
@@ -184,59 +181,40 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //Otherwise, they get a link that will let them accept without account
       return {
         html: `<div style="background-color: #f9f9f9">
-        <div
-          style="
+        <div style="
             background: #f9f9f9;
             background-color: #f9f9f9;
             margin: 0px auto;
             max-width: 600px;
-          "
-        >
-          <table
-            align="center"
-            border="0"
-            cellpadding="0"
-            cellspacing="0"
-            role="presentation"
-            style="background: #f9f9f9; background-color: #f9f9f9; width: 100%"
-          >
+          ">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation"
+            style="background: #f9f9f9; background-color: #f9f9f9; width: 100%">
             <tbody>
               <tr>
-                <td
-                  style="
+                <td style="
                     border-bottom: #333957 solid 5px;
                     direction: ltr;
                     font-size: 0px;
                     padding: 20px 0;
                     text-align: center;
                     vertical-align: top;
-                  "
-                ></td>
+                  "></td>
               </tr>
             </tbody>
           </table>
         </div>
-  
-        <div
-          style="
+      
+        <div style="
             background: #fff;
             background-color: #fff;
             margin: 0px auto;
             max-width: 600px;
-          "
-        >
-          <table
-            align="center"
-            border="0"
-            cellpadding="0"
-            cellspacing="0"
-            role="presentation"
-            style="background: #fff; background-color: #fff; width: 100%"
-          >
+          ">
+          <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation"
+            style="background: #fff; background-color: #fff; width: 100%">
             <tbody>
               <tr>
-                <td
-                  style="
+                <td style="
                     border: #dddddd solid 1px;
                     border-top: 0px;
                     direction: ltr;
@@ -244,127 +222,113 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
                     padding: 20px 0;
                     text-align: center;
                     vertical-align: top;
-                  "
-                >
-                  <div
-                    class="mj-column-per-100 outlook-group-fix"
-                    style="
+                  ">
+                  <div class="mj-column-per-100 outlook-group-fix" style="
                       font-size: 13px;
                       text-align: left;
                       direction: ltr;
                       display: inline-block;
                       vertical-align: bottom;
                       width: 100%;
-                    "
-                  >
-                    <table
-                      border="0"
-                      cellpadding="0"
-                      cellspacing="0"
-                      role="presentation"
-                      style="vertical-align: bottom"
-                      width="100%"
-                    >
+                    ">
+                    <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align: bottom"
+                      width="100%">
                       <tr>
-                        <td
-                          align="center"
-                          style="
+                        <td align="center" style="
                             font-size: 0px;
                             padding: 10px 25px;
                             padding-bottom: 40px;
                             word-break: break-word;
-                          "
-                        >
-                          <div
-                            style="
-                              font-family: 'Impact';
-                              font-size: 40px;
-                              font-weight: 400;
+                          ">
+                          <div style="
+                              font-family: 'Helvetica Neue', Arial, sans-serif;
+                              font-size: 60px;
+                              font-weight: 900;
                               line-height: 1;
                               color: rgb(38, 38, 38);
                               text-align: center;
-                            "
-                          >
-                            First<span style="color: rgb(161, 29, 255)">C</span
-                            >all
+                            ">
+                            FirstCall
                           </div>
                         </td>
                       </tr>
-  
+      
                       <tr>
-                        <td
-                          align="center"
-                          style="
+                        <td align="center" style="
                             font-size: 0px;
                             padding: 10px 25px;
                             padding-bottom: 40px;
                             word-break: break-word;
-                          "
-                        >
-                          <div
-                            style="
+                          ">
+                          <div style="
                               font-family: 'Helvetica Neue', Arial, sans-serif;
                               font-size: 28px;
-                              font-weight: bold;
+                              font-weight: 800;
                               line-height: 1;
                               text-align: center;
                               color: #555;
-                            "
-                          >
-                          ${details.sender} has sent you a gig request!
+                            ">
+                            ${details.sender} has sent you a gig request!
                           </div>
                         </td>
                       </tr>
-
+      
                       <tr>
-                        <td
-                          align="center"
-                          style="
+                        <td align="center" style="
                             font-size: 0px;
                             padding: 10px 25px;
                             padding-bottom: 40px;
                             word-break: break-word;
-                          "
-                        >
-                          <div
-                            style="
+                          ">
+                          <div style="
                               font-family: 'Helvetica Neue', Arial, sans-serif;
                               font-size: 22px;
                               font-weight: bold;
                               line-height: 1;
                               text-align: center;
                               color: #555;
-                            "
-                          >
-                          ${gigDate.toLocaleDateString()}, ${returnTime(
+                            ">
+                            ${gigDate.toLocaleDateString()}, ${returnTime(
           gigDate
         )}
                           </div>
                         </td>
                       </tr>
-  
-                     
+      
                       <tr>
-                        <td
-                          align="center"
-                          style="
+                        <td align="center" style="
+                            font-size: 0px;
+                            padding: 10px 25px;
+                            word-break: break-word;
+                          ">
+                          <div style="
+                              font-family: 'Helvetica Neue', Arial, sans-serif;
+                              font-size: 20px;
+                              font-weight: 800;
+                              line-height: 1;
+                              text-align: center;
+                              color: #555;
+                            ">
+                            ${gig.description}
+                          </div>
+                        </td>
+                      </tr>
+      
+                      <tr>
+                        <td align="center" style="
                             font-size: 0px;
                             padding: 10px 25px;
                             padding-bottom: 0;
                             word-break: break-word;
-                          "
-                        >
-                          <div
-                            style="
+                          ">
+                          <div style="
                               font-family: 'Helvetica Neue', Arial, sans-serif;
                               font-size: 16px;
                               line-height: 22px;
-                              text-align: center;
+                              text-align: left;
                               color: #555;
-                            "
-                          >
+                            ">
                             <ul style="list-style: none">
-                              <li><strong>What:</strong> ${gig.description}</li>
                               <li><strong>When:</strong> ${gigDate.toLocaleDateString()}, ${returnTime(
           gigDate
         )}</li>
@@ -377,68 +341,48 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
                           </div>
                         </td>
                       </tr>
-  
+      
                       <tr>
-                        <td
-                          align="center"
-                          style="
+                        <td align="center" style="
                             font-size: 0px;
                             padding: 10px 25px;
                             padding-bottom: 20px;
                             word-break: break-word;
-                          "
-                        >
-                          <div
-                            style="
+                          ">
+                          <div style="
                               font-family: 'Helvetica Neue', Arial, sans-serif;
                               font-size: 16px;
                               line-height: 22px;
                               text-align: center;
                               color: #555;
-                            "
-                          >
+                            ">
                             Please follow the link below to respond. You don't
                             need an account to reply!
                           </div>
                         </td>
                       </tr>
-  
+      
                       <tr>
-                        <td
-                          align="center"
-                          style="
+                        <td align="center" style="
                             font-size: 0px;
                             padding: 10px 25px;
                             padding-top: 30px;
                             padding-bottom: 40px;
                             word-break: break-word;
-                          "
-                        >
-                          <table
-                            align="center"
-                            border="0"
-                            cellpadding="0"
-                            cellspacing="0"
-                            role="presentation"
-                            style="border-collapse: separate; line-height: 100%"
-                          >
+                          ">
+                          <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation"
+                            style="border-collapse: separate; line-height: 100%">
                             <tr>
-                              <td
-                                align="center"
-                                role="presentation"
-                                style="
+                              <td align="center" role="presentation" style="
                                   border: none;
                                   border-radius: 3px;
-                                  background: rgb(161, 29, 255);
+                                  background: #449dbf;
                                   color: #ffffff;
                                   cursor: auto;
                                   padding: 15px 25px;
-                                "
-                                valign="middle"
-                              >
-                                <p
-                                  style="
-                                    background: rgb(161, 29, 255);
+                                " valign="middle">
+                                <p style="
+                                    background: #449dbf;
                                     color: #ffffff;
                                     font-family: 'Helvetica Neue', Arial,
                                       sans-serif;
@@ -448,69 +392,51 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
                                     margin: 0;
                                     text-decoration: none;
                                     text-transform: none;
-                                  "
-                                >
-                                  <a
-                                    href="${anchorUrl}"
-                                    style="color: #fafafa; text-decoration: none"
-                                    >Click here to respond!</a
-                                  >
+                                  ">
+                                  <a href="${anchorUrl}" style="color: #fafafa; text-decoration: none">Click here to
+                                    respond!</a>
                                 </p>
                               </td>
                             </tr>
                           </table>
                         </td>
                       </tr>
-  
+      
                       <tr>
-                        <td
-                          align="center"
-                          style="
+                        <td align="center" style="
                             font-size: 0px;
                             padding: 10px 25px;
                             word-break: break-word;
-                          "
-                        >
-                          <div
-                            style="
+                          ">
+                          <div style="
                               font-family: 'Helvetica Neue', Arial, sans-serif;
                               font-size: 26px;
                               font-weight: bold;
                               line-height: 1;
                               text-align: center;
                               color: #555;
-                            "
-                          >
-                            Need Help? <br/> 
+                            ">
+                            Need Help? <br />
                             Think something is wrong?
                           </div>
                         </td>
                       </tr>
-  
+      
                       <tr>
-                        <td
-                          align="center"
-                          style="
+                        <td align="center" style="
                             font-size: 0px;
                             padding: 10px 25px;
                             word-break: break-word;
-                          "
-                        >
-                          <div
-                            style="
+                          ">
+                          <div style="
                               font-family: 'Helvetica Neue', Arial, sans-serif;
                               font-size: 14px;
                               line-height: 22px;
                               text-align: center;
                               color: #555;
-                            "
-                          >
+                            ">
                             Please send any feedback to
-                            <a
-                              href="mailto:info@example.com"
-                              style="color: #2f67f6"
-                              >info@example.com</a
-                            >
+                            <a href="mailto:info@example.com" style="color: #2f67f6">info@example.com</a>
                           </div>
                         </td>
                       </tr>
@@ -521,66 +447,38 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
             </tbody>
           </table>
         </div>
-  
+      
         <div style="margin: 0px auto; max-width: 600px">
-          <table
-            align="center"
-            border="0"
-            cellpadding="0"
-            cellspacing="0"
-            role="presentation"
-            style="width: 100%"
-          >
+          <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width: 100%">
             <tbody>
               <tr>
-                <td
-                  style="
+                <td style="
                     direction: ltr;
                     font-size: 0px;
                     padding: 20px 0;
                     text-align: center;
                     vertical-align: top;
-                  "
-                >
-                  <div
-                    class="mj-column-per-100 outlook-group-fix"
-                    style="
+                  ">
+                  <div class="mj-column-per-100 outlook-group-fix" style="
                       font-size: 13px;
                       text-align: left;
                       direction: ltr;
                       display: inline-block;
                       vertical-align: bottom;
                       width: 100%;
-                    "
-                  >
-                    <table
-                      border="0"
-                      cellpadding="0"
-                      cellspacing="0"
-                      role="presentation"
-                      width="100%"
-                    >
+                    ">
+                    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
                       <tbody>
                         <tr>
                           <td style="vertical-align: bottom; padding: 0">
-                            <table
-                              border="0"
-                              cellpadding="0"
-                              cellspacing="0"
-                              role="presentation"
-                              width="100%"
-                            >
+                            <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
                               <tr>
-                                <td
-                                  align="center"
-                                  style="
+                                <td align="center" style="
                                     font-size: 0px;
                                     padding: 0;
                                     word-break: break-word;
-                                  "
-                                >
-                                  <div
-                                    style="
+                                  ">
+                                  <div style="
                                       font-family: 'Helvetica Neue', Arial,
                                         sans-serif;
                                       font-size: 12px;
@@ -588,8 +486,7 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
                                       line-height: 1;
                                       text-align: center;
                                       color: #575757;
-                                    "
-                                  >
+                                    ">
                                     FirstCall is a gig management tool that
                                     aims to be the #1 software solution for
                                     independant musicians and bandleaders. We know
@@ -619,11 +516,9 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //user declined gig
       return {
         html: `<p>${details.sender} cannot do the gig! </p>`,
-        subject: `${
-          details.sender
-        } has turned down a gig offer on ${gigDate.toLocaleDateString()}. Sending invitation to ${
-          options.nextUser
-        }`,
+        subject: `${details.sender
+          } has turned down a gig offer on ${gigDate.toLocaleDateString()}. Sending invitation to ${options.nextUser
+          }`,
         details,
       };
     }
@@ -631,9 +526,8 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //user accepted gig
       return {
         html: `<p>${details.sender} has accepted your offer! </p>`,
-        subject: `Score!!! ${
-          details.sender
-        } can do the gig on ${gigDate.toLocaleDateString()}.`,
+        subject: `Score!!! ${details.sender
+          } can do the gig on ${gigDate.toLocaleDateString()}.`,
         details,
       };
     }
@@ -649,13 +543,11 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //gig has empty stack
 
       return {
-        html: `<p><strong>Uh-oh!</strong> ${
-          details.sender
-        } declined your gig offer on ${gigDate.toLocaleDateString()} 
-        and now your ${
-          options.role
-        } stack is empty! Please add more email addresses to your stack. </p>`,
-        subject: `firstCall: Your gig on ${gigDate.toLocaleDateString()} has an empty stack!`,
+        html: `<p><strong>Uh-oh!</strong> ${details.sender
+          } declined your gig offer on ${gigDate.toLocaleDateString()} 
+        and now your ${options.role
+          } stack is empty! Please add more email addresses to your stack. </p>`,
+        subject: `Your gig on ${gigDate.toLocaleDateString()} has an call list!`,
         details,
       };
     }
@@ -667,7 +559,7 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       }
       return {
         html: `<p>${options.body}</p>`,
-        subject: `firstCall: ${options.subject}`,
+        subject: `${options.subject}`,
         details,
       };
     }
