@@ -1,8 +1,7 @@
 const { CLIENT_URL, EMAIL_PASSWORD, EMAIL_USER } = process.env;
 const { User, Gig, CallStack, Notification } = require("../models");
-const { properize, returnTime, addHours } = require("./helpers");
+const { properize, returnTime } = require("./helpers");
 const nodemailer = require("nodemailer");
-const bcrypt = require("bcryptjs");
 
 /**
  * @param {String} to email address
@@ -37,7 +36,6 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
     });
 
     const receiver = await User.findOne({ where: { email: to } }); //might be undefined/null
-    // const sender = await User.findOne({ where: { id: senderId } });
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -45,8 +43,6 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
         user: EMAIL_USER,
         pass: EMAIL_PASSWORD,
       },
-      // logger: true,
-      // debug: true
     });
 
     //add properties to options object
@@ -63,10 +59,10 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
     //create a notification if the email address has an account associated with it
     const notification = receiver?.id
       ? await Notification.create({
-        text: subject,
-        userId: receiver.id,
-        details: { ...details, ...options, code: emailCode },
-      })
+          text: subject,
+          userId: receiver.id,
+          details: { ...details, ...options, code: emailCode },
+        })
       : `${to} doesn't have an account yet.`;
 
     if (emailCode === 400) return notification;
@@ -86,21 +82,27 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
     );
     // return mailOptions;
 
-    //   ADD LOGIC THAT WILL LOOK AT RECEIVER'S SETTINGS
-    //   AND PREVENT EMAILS IF THEY HAVE DISABLED THEM
-    //UNCOMMENT THE FOLLOWING TO ACTUALLY SEND EMAILS!!!
-
     //🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡🛡 //
 
-
-    emailCode === 100 && (receiver?.emails ?? true) &&
+    //only send invitations
+    emailCode === 100 &&
+      //don't send if emptystack
+      to !== "Empty stack!" &&
+      //only send if user exists and hasnt opted out, default to true for non-accountholders
+      (receiver?.emails ?? true) &&
       transporter.sendMail(mailOptions, (err, info) => {
         if (err) {
-          console.error("LINE 99 NEWEMAIL: ", err, "TO:", to);
+          console.error("NEWEMAIL TRANSPORTER: ", err, "TO:", to);
           return { err };
         } else {
-          console.log(`Email sent: ${{ info }}.`);
-          return { info };
+          const { messageId, envelope, accepted, rejected, pending, response } =
+            info;
+          console.log(
+            `Email sent: ${
+              (messageId, envelope, accepted, rejected, pending, response)
+            }.`
+          );
+          return info;
         }
       });
   } catch (err) {
@@ -119,6 +121,7 @@ const newEmail = async (to, emailCode, gigId, senderEmail, options) => {
  * @param {string} options.body body of the email if emailCode is 400 (custom email)
  * @param {string} options.subject subject of the email if emailCode is 400 (custom email)
  * @param {boolean} options.receiverExists for conditional email content
+ * @param {string} options.senderName name if open accept
  * @returns {object} containing 'html' and 'subject', both Strings and details, an object
  */
 const emailController = async (gig, senderEmail, emailCode, options) => {
@@ -127,12 +130,13 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
     //will be undefined if user doesn't have an account
     const sender = await User.findOne({ where: { email: senderEmail } });
 
-    // const gigInfo = await Gig.getGigInfo(gig.id)
-
-    console.log("USER EXISTS? :", options.receiverExists);
+    console.log(
+      "NOTIFICATION/EMAIL RECEIVER EXISTS? :",
+      options.receiverExists
+    );
 
     const details = {
-      sender: sender?.name ?? senderEmail,
+      sender: sender?.name ?? options.senderName ?? senderEmail,
       dateTime: gigDate,
       gigId: gig?.id,
     };
@@ -160,12 +164,11 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
     if (emailCode === 100) {
       const anchorUrl = options?.receiverExists
         ? //either give them a link to sign in
-        `www.fistcallclient.com/acceptGig`
+          `${CLIENT_URL}/main/gig/${gig.id}#gig-anchor`
         : //or embed the info in url to be parsed on the front end and run a post fetch to accept or decline
-        `http://localhost:3000/respond/?email=${Buffer.from(
-          options.to
-        ).toString("base64")}&gigId=${gig.id}&role=${options.role}&token=${gig.token
-        }`;
+          `${CLIENT_URL}/respond/?email=${Buffer.from(options.to).toString(
+            "base64"
+          )}&gigId=${gig.id}&role=${options.role}&token=${gig.token}`;
 
       console.log("ANCHOR URL: ", anchorUrl);
       /************************************************************
@@ -516,9 +519,11 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //user declined gig
       return {
         html: `<p>${details.sender} cannot do the gig! </p>`,
-        subject: `${details.sender
-          } has turned down a gig offer on ${gigDate.toLocaleDateString()}. Sending invitation to ${options.nextUser
-          }`,
+        subject: `${
+          details.sender
+        } has turned down a gig offer on ${gigDate.toLocaleDateString()}. Sending invitation to ${
+          options.nextUser
+        }`,
         details,
       };
     }
@@ -526,8 +531,9 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //user accepted gig
       return {
         html: `<p>${details.sender} has accepted your offer! </p>`,
-        subject: `Score!!! ${details.sender
-          } can do the gig on ${gigDate.toLocaleDateString()}.`,
+        subject: `Score!!! ${
+          details.sender
+        } can do the gig on ${gigDate.toLocaleDateString()}.`,
         details,
       };
     }
@@ -535,7 +541,7 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //gig is fully booked
       return {
         html: `<p>${details.sender} has accepted your offer, and with that, your gig is fully booked! Hooray! </p>`,
-        subject: `Score!!! the gig on ${gigDate.toLocaleDateString()} has been filled!`,
+        subject: `${details.sender} has accepted your offer, and with that, your gig is fully booked! Hooray!`,
         details,
       };
     }
@@ -543,10 +549,12 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
       //gig has empty stack
 
       return {
-        html: `<p><strong>Uh-oh!</strong> ${details.sender
-          } declined your gig offer on ${gigDate.toLocaleDateString()} 
-        and now your ${options.role
-          } stack is empty! Please add more email addresses to your stack. </p>`,
+        html: `<p><strong>Uh-oh!</strong> ${
+          details.sender
+        } declined your gig offer on ${gigDate.toLocaleDateString()} 
+        and now your ${
+          options.role
+        } stack is empty! Please add more email addresses to your stack. </p>`,
         subject: `Your gig on ${gigDate.toLocaleDateString()} has an call list!`,
         details,
       };

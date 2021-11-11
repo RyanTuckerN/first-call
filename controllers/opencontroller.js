@@ -39,21 +39,25 @@ router.post("/:gigId/accept/:email/:role/:token", async (req, res) => {
     } else if (success) {
       GigStack.setStackFilled(role, name);
       GigStack.checkFilled()
-        ? await newEmail(gigOwner.email, 300, gigId, onCall, { role })
-        : await newEmail(gigOwner.email, 201, gigId, onCall, { role });
+        ? await newEmail(gigOwner.email, 300, gigId, onCall, {
+            role,
+            senderName: name,
+          })
+        : await newEmail(gigOwner.email, 201, gigId, onCall, {
+            role,
+            senderName: name,
+          });
 
       await CallStack.update(GigStack, { where: { gigId } });
       await gig.update({
         openCalls: GigStack.returnOpenCalls(),
         confirmedNoAccount: [...gig.confirmedNoAccount, onCall],
       });
-      res
-        .status(200)
-        .json({
-          message: "success!",
-          success: true,
-          confirmed: { name, email: onCall },
-        });
+      res.status(200).json({
+        message: "success!",
+        success: true,
+        confirmed: { name, email: onCall },
+      });
     } else {
       res.status(500).json({
         message: "Something went wrong! You sure you're on call for this gig?",
