@@ -164,9 +164,9 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
     if (emailCode === 100) {
       const anchorUrl = options?.receiverExists
         ? //either give them a link to sign in
-          `${CLIENT_URL}/main/gig/${gig.id}#gig-anchor`
+          `https://firstcallapp.herokuapp.com/main/gig/${gig.id}#gig-anchor`
         : //or embed the info in url to be parsed on the front end and run a post fetch to accept or decline
-          `${CLIENT_URL}/respond/?email=${Buffer.from(options.to).toString(
+          `https://firstcallapp.herokuapp.com/respond/?email=${Buffer.from(options.to).toString(
             "base64"
           )}&gigId=${gig.id}&role=${options.role}&token=${gig.token}`;
 
