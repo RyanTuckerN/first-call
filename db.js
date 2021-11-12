@@ -3,12 +3,12 @@ const { Sequelize } = require("sequelize");
 const db = new Sequelize(process.env.DATABASE_URL, {
   dialect: "postgres",
   logging: false, //comment out for SQL commands in console
-  // dialectOptions: {
-  //   ssl: {
-  //     require: true,
-  //     rejectUnauthorized: false, // very important
-  //   },
-  // // },
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false, // very important
+    },
+  },
 });
 
 async function authenticateDB() {
