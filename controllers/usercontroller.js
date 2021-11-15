@@ -231,7 +231,7 @@ router.get("/profile/:id", validateSession, async (req, res) => {
       where: { id },
       include: {
         model: Story,
-        order: [['id', 'DESC']],
+        order: [['id', 'ASC']],
         include: [
           {
             model: Post,
