@@ -219,7 +219,7 @@ router.get("/auth", validateSession, async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ err, auth: false });
+    res.status(200).json({ success: false, auth: false });
   }
 });
 

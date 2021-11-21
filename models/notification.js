@@ -13,12 +13,6 @@ Notification.init(
   {
     sequelize,
     modelName: "notification",
-    hooks: {
-      // beforeCreate: async (post, options) => {
-      //   post.voters = [];
-      //   post.addUpvote(post.author);
-      // },
-    },
   }
 );
 

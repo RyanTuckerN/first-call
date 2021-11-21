@@ -17,12 +17,10 @@ const User = sequelize.define(
     photo: DataTypes.STRING(2048),
     emails: { type: DataTypes.BOOLEAN, defaultValue: true },
     name: { type: DataTypes.STRING, allowNull: false },
-    // description: DataTypes.TEXT,
     location: DataTypes.STRING,
     paymentPreference: DataTypes.JSONB,
     following: {type: DataTypes.ARRAY(DataTypes.INTEGER), defaultValue: []},
     followers: {type: DataTypes.ARRAY(DataTypes.INTEGER), defaultValue: []},
-    // specialties: DataTypes.ARRAY(DataTypes.STRING(20)),
   }
 );
 

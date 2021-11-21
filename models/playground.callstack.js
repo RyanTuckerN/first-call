@@ -53,12 +53,7 @@ const obj2 = {
 // GigStack.addRoleToStackTable('baixon', ['Markopetrichiv@me.com', 'test@me.com'])
 // GigStack.returnRoles().forEach(role=>GigStack.setStackFilled(role))
 // // console.log(GigStack.stackTable);
-// GigStack.log()
-
-// console.log(GigStack.returnNext("accordian"));
-// console.log(GigStack.returnNext("accordian"));
-// console.log(GigStack.returnNext("accordian"));
-// GigStack.addCallToStack("accordian", "test@gmail.com");
+// GigStack.log()JSONB
 // GigStack.addCallToStack("accordian", "test23@gmail.com");
 // GigStack.addCallToStack("accordian", "test4325@gmail.com");
 // console.log(GigStack.setStackFilled("accordian"));

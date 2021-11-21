@@ -199,6 +199,7 @@ module.exports = class CallStackModel {
     }
   }
 
+
   /**
    *
    * @param {String} role name of the role to add
