@@ -202,31 +202,24 @@ router.post("/update-password", validateSession, async (req, res) => {
 });
 
 //authorize a user
-router.get("/auth", async (req, res) => {
+router.get("/auth", validateSession, async (req, res) => {
   try {
-    const token = req.headers.authorization ?? "";
-    if (!token) {
-      res.status(200).json({ auth: false, message: "🛑 No token provided 🛑" });
-      return;
-    } else {
-      jwt.verify(token, process.env.JWT_SECRET, (err, decodeToken) => {
-        if (!err && decodeToken) {
-          const user = await User.findOne({
-            where: {
-              id: decodeToken.id,
-            },
-            attributes: { exclude: ["passwordhash"] },
-            include: { model: Gig, include: { model: CallStack } },
-          });
-          res.status(200).json({ message: "Success!", auth: true, user });
-        } else {
-          res.status(200).json({ message: "🚫 Not Authorized 🚫", err });
-        }
-      });
-    }
+    const { id } = req.user;
+    const user = await User.findOne({
+      where: { id },
+      // include: { all: true, nested: true },
+      include: { model: Gig, include: { model: CallStack } },
+    });
+    // const gigs = await user.getGigs()
+
+    delete user.passwordhash;
+    res.status(200).json({
+      auth: true,
+      user: { ...user.dataValues, passwordhash: null, success: true },
+    });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ err });
+    res.status(200).json({ success: false, auth: false });
   }
 });
 
@@ -238,7 +231,7 @@ router.get("/profile/:id", validateSession, async (req, res) => {
       where: { id },
       include: {
         model: Story,
-        order: [["id", "ASC"]],
+        order: [['id', 'ASC']],
         include: [
           {
             model: Post,
