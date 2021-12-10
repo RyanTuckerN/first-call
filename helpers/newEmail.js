@@ -166,9 +166,11 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
         ? //either give them a link to sign in
           `https://firstcallapp.herokuapp.com/main/gig/${gig.id}#gig-anchor`
         : //or embed the info in url to be parsed on the front end and run a post fetch to accept or decline
-          `https://firstcallapp.herokuapp.com/respond/?email=${Buffer.from(options.to).toString(
-            "base64"
-          )}&gigId=${gig.id}&role=${options.role}&token=${gig.token}`;
+          `https://firstcallapp.herokuapp.com/respond/?email=${Buffer.from(
+            options.to
+          ).toString("base64")}&gigId=${gig.id}&role=${options.role}&token=${
+            gig.token
+          }`;
 
       console.log("ANCHOR URL: ", anchorUrl);
       /************************************************************
@@ -291,7 +293,7 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
                               text-align: center;
                               color: #555;
                             ">
-                            ${gigDate.toLocaleDateString()}, ${returnTime(
+                            ${gigDate.toLocaleDateString('en-us', {timeZone: 'America/New_York'})}, ${returnTime(
           gigDate
         )}
                           </div>
@@ -439,7 +441,7 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
                               color: #555;
                             ">
                             Please send any feedback to
-                            <a href="mailto:info@example.com" style="color: #2f67f6">info@example.com</a>
+                            <a href="mailto:firstcallwebapp@gmail.com" style="color: #2f67f6">firstcallwebapp@gmail.com</a>
                           </div>
                         </td>
                       </tr>
@@ -555,7 +557,7 @@ const emailController = async (gig, senderEmail, emailCode, options) => {
         and now your ${
           options.role
         } stack is empty! Please add more email addresses to your stack. </p>`,
-        subject: `Your gig on ${gigDate.toLocaleDateString()} has an call list!`,
+        subject: `Your gig on ${gigDate.toLocaleDateString()} has an empty call list!`,
         details,
       };
     }

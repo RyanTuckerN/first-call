@@ -11,14 +11,17 @@ const properize = (s) => s[0].toUpperCase() + s.slice(1);
  * @returns {String} string representation of the time with AM/PM
  */
 const returnTime = (d) => {
-  let m = "";
-  let hour = d.getHours();
-  let minute = d.getMinutes();
-  m = hour >= 12 ? "PM" : "AM";
+  let [hour, minute, rest] = d
+      .toLocaleTimeString('en-us', {timeZone: 'America/New_York'})
+      .split(':')
+  let m = rest.split(" ")[1];
   hour = hour <= 12 ? hour : hour - 12;
   minute = minute < 10 ? `0${minute}` : minute;
   return `${hour}:${minute} ${m}`;
 };
+
+const d = new Date("2021-11-20 23:45:43+00")
+console.log(returnTime(d))
 
 /**
  *
