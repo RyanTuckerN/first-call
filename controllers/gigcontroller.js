@@ -88,12 +88,6 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
     }
 
     const callStack = await CallStack.newStackTable(stackTable, gigId);
-    // if (!callStack.stackTable.bandLeader) {
-    //   callStack.stackTable.bandLeader = {
-    //     confirmed: gigOwner.email,
-    //     filled: true,
-    //   };
-    // }
     await Gig.addUserToGig(gig.ownerId, gig.id);
 
     /*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
@@ -119,7 +113,7 @@ router.post("/:gigId/callStack", validateSession, async (req, res) => {
       .status(200)
       .json({ message: "Success!", callStack, success: true, gig });
   } catch (err) {
-    if (err?.name === "SequelizeUniqueConstraintError") {
+    if (err.name === "SequelizeUniqueConstraintError") {
       res
         .status(400)
         .json({ message: `Callstack already exists for gig ${gigId}.` });

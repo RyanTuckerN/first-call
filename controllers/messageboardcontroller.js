@@ -2,7 +2,6 @@ const express = require("express");
 const { Post, Gig, User } = require("../models");
 const router = express.Router();
 const validateSession = require("../middleware/validateSession");
-const postOrganizer = require("../helpers/postOrganizer");
 
 //ALL OF THESE NEED VALIDATION
 //  -VALIDATESESSION MIDDLEWARE
@@ -245,44 +244,21 @@ router.post(
 router.get("/:gigId", validateSession, async (req, res) => {
   try {
     const { gigId } = req.params;
-    const { id } = req.user;
-    // const id = 1;
 
     const gig = await Gig.findOne({
       where: { id: gigId },
       include: [
         {
           model: Post,
-          // attributes: ['id', 'childOf', 'text'],
           include: { model: User, attributes: ["name", "email"] },
         },
       ],
     });
-    // const users = await gig.getUsers();
 
-    // //if user is not on the gig
-    // if (!users.map((u) => u.id).includes(id)) {
-    //   res.status(403).json({ message: "not authorized!" });
-    //   return;
-    // }
-    // const response = postOrganizer(gig.posts);
     res.status(200).json({ posts: gig.posts, success: true });
   } catch (err) {
     res.status(500).json({ err });
   }
-  // res.status(200).json({ count: posts.count, posts: posts.rows });
-  // res
-  //   .status(200)
-  //   .json({ posts: gig.posts, count: gig.posts.length, message: "success" });
 });
-
-// router.get("/:gigId/test", validateSession, async (req, res) => {
-//   try {
-//     const posts = await Post.findAll({});
-//     res.status(200).json({ posts });
-//   } catch (err) {
-//     res.status(500).json({ err });
-//   }
-// });
 
 module.exports = router;
